@@ -4,6 +4,7 @@
 #include <tuple>
 #include "Function.h"
 
+
 int add(int a, int b)
 {
 	return a + b;
@@ -12,12 +13,12 @@ int add(int a, int b)
 
 int main()
 {
-	int s = 10;
-	int** ss = new int* ();
-	*ss = &s;
-	delete ss;
+	//int s = 10;
+	//int** ss = new int* ();
+	//*ss = &s;
+	//delete ss;
 
-	return 0;
+	//return 0;
 	TCppFunction<int, int, int> Function("add", &add);
 	auto Frame = Function.NewFrame();
 	int* a = (int*)Frame->GetArg(0);
@@ -27,6 +28,7 @@ int main()
 	Function.Invoke(Frame.get());
 	int* c = (int*)Frame->GetRet();
 	std::cout << *c << std::endl;
+	return 0;
 }
 
 int print2(bool w)

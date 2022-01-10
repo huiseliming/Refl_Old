@@ -51,7 +51,7 @@ public:
         {
             //ArgsPtr[N] = reinterpret_cast<void*>(&std::get<N>(ArgsTuple));
             using ArgNType = decltype(std::get<N>(ArgsTuple));
-            if constexpr (!std::is_pointer_v<ArgNType> && !std::is_reference_v<ArgNType> )
+            if constexpr (!std::is_pointer_v<ArgNType> && !std::is_reference_v<ArgNType>)
             {
                 ArgsPtr[N] = new ArgNType();
             }
@@ -59,7 +59,6 @@ public:
             {
                 ArgsPtr[N] = reinterpret_cast<void*>(&std::get<N>(ArgsTuple));
             }
-            //
             //if constexpr (std::is_pointer_v<> && std::is_reference_v<decltype(std::get<N>(ArgsTuple))>)
             //{
             //    ArgsPtr[N] = reinterpret_cast<void*>(&std::get<N>(ArgsTuple));
@@ -79,12 +78,42 @@ public:
         //    ArgsPtr[Indices].
         //}
 
+        template<typename T>
+        struct TArgument
+        {};
+
+        template<typename T>
+        void NewArgsBuffers(size_t index, TArgument<T> argument)
+        {
+            if constexpr (!std::is_pointer_v<T> && !std::is_reference_v<T>)
+            {
+                ArgsPtr[index] = new T();
+            }
+        }
+
+        template<typename T, typename ...Arguments>
+        void NewArgsBuffers(size_t index, TArgument<T> argument, TArgument<Arguments>... arguments)
+        {
+            if constexpr (!std::is_pointer_v<T> && !std::is_reference_v<T>)
+            {
+                ArgsPtr[index] = new T();
+            }
+            //else
+            //{
+            //    ArgsPtr[N] = reinterpret_cast<void*>(&std::get<N>(ArgsTuple));
+            //}
+            NewArgsBuffers(index + 1, arguments...);
+        }
+
     public:
         CFrame()
             : CFunction::CFrame()
         {
-            RetPtr = reinterpret_cast<void*>(&(std::get<0>(RetTuple)));
-            SaveArgsAddress<std::tuple_size_v<std::tuple<Args...>> - 1>();
+            NewArgsBuffers(0, TArgument<Args>()...);
+            if constexpr (!std::is_pointer_v<Ret> && !std::is_reference_v<Ret>)
+            {
+                RetPtr = new Ret();
+            }
         }
 
         virtual void* GetRetTuple() override { return &RetTuple; }
@@ -96,7 +125,7 @@ public:
         std::tuple<Ret> RetTuple;
         std::tuple<Args...> ArgsTuple;
         void* RetPtr;
-        void* ArgsPtr[std::tuple_size_v<std::tuple<Args...>>];
+        void* ArgsPtr[sizeof...(Args)];
     };
 
     virtual void Invoke(CFunction::CFrame* Frame) override
