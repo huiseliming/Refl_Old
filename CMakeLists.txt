@@ -16,7 +16,7 @@ if(NOT PROJECT_NAME)
         message("VCPKG_TARGET_TRIPLET: " ${VCPKG_TARGET_TRIPLET})
     endif()
 
-    project(Core LANGUAGES CXX C)
+    project(CppEngine LANGUAGES CXX C)
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
@@ -42,6 +42,7 @@ if(WIN32)
 endif()
 
 add_subdirectory(Tools)
+add_subdirectory(Tests)
 
 
 

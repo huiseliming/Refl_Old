@@ -10,6 +10,8 @@ file(GLOB_RECURSE MetaToolSource Source/*.cpp Source/*.h)
 
 add_executable(MetaTool ${MetaToolSource})
 
+target_link_libraries(MetaTool PUBLIC Metadata)
+
 #libclang configure BEGIN 
 target_include_directories(MetaTool PUBLIC ${LLVM_INCLUDE_DIRS})
 target_link_directories(MetaTool PUBLIC ${LLVM_LIBRARY_DIRS})
