@@ -2,6 +2,7 @@
 
 find_package(LLVM CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
+find_package(cxxopts CONFIG REQUIRED)
 
 set(CLANG_INCLUDE_DIRS "llvm/clang/include")
 set(CLANG_LIBS clang)
@@ -15,8 +16,9 @@ target_link_libraries(MetaTool PUBLIC Metadata)
 #libclang configure BEGIN 
 target_include_directories(MetaTool PUBLIC ${LLVM_INCLUDE_DIRS})
 target_link_directories(MetaTool PUBLIC ${LLVM_LIBRARY_DIRS})
-target_link_libraries(MetaTool PUBLIC libclang)
-target_link_libraries(MetaTool PUBLIC fmt::fmt)
+target_link_libraries(MetaTool PRIVATE libclang)
+target_link_libraries(MetaTool PRIVATE fmt::fmt)
+target_link_libraries(MetaTool PRIVATE cxxopts::cxxopts)
 #target_link_libraries(MetaTool PUBLIC libclang ${CLANG_LIBS})
 
 add_custom_command(TARGET MetaTool POST_BUILD        # Adds a post-build event to MyTest

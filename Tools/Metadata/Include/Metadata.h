@@ -7,20 +7,20 @@ class METADATA_API CMetadata
 {
     static std::unordered_map<uint64_t, CMetadata*> Table;
 public:
-    CMetadata(const std::string& name)
-        : Name(name)
+    CMetadata(const std::string& InName)
+        : Name(InName)
     {}
 
-    std::string GetMetadataValue(const std::string& key)
+    std::string GetMetadataValue(const std::string& InKey)
     {
-        if (auto it = Metadata.find(key); it != Metadata.end())
+        if (auto it = Metadata.find(InKey); it != Metadata.end())
             return it->second;
         return nullptr;
     }
 
-    bool ContainsMetadataKey(const std::string& key)
+    bool ContainsMetadataKey(const std::string& InKey)
     {
-        return Metadata.contains(key);
+        return Metadata.contains(InKey);
     }
 
     const std::string& GetName() { return Name; }

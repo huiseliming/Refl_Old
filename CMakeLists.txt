@@ -46,4 +46,20 @@ add_subdirectory(Tests)
 
 
 
+file(GLOB_RECURSE PublicHeader Include/*.h)
+file(GLOB_RECURSE PrivateHeader Source/*.h)
+file(GLOB_RECURSE PrivateSource Source/*.cpp)
 
+
+## add the command that invokes the reflection parser executable
+## whenever a header file in your project has changed
+#add_custom_command(
+#    OUTPUT ${META_GENERATED_HEADER} ${META_GENERATED_SOURCE}
+#    DEPENDS ${PublicHeader} ${PrivateHeader}
+#    COMMAND MetaTool
+#    --target-name "${PROJECT_NAME}"
+#    --in-source "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_SOURCE_DIR}/${PROJECT_META_HEADER}"
+#    --out-header "${META_GENERATED_HEADER}"
+#    --out-source "${META_GENERATED_SOURCE}"
+#    --flags ${META_FLAGS}
+#)

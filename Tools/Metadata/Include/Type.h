@@ -12,7 +12,7 @@ public:
 
 private:
     std::vector<CType*       > BaseTypes;
-    std::vector<CConstructor*> Constructors;
+    //std::vector<CConstructor*> Constructors;
     std::vector<CField*      > Fields;
     std::vector<CFunction*   > Functions;
 };
