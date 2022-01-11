@@ -53,17 +53,19 @@ public:
 class CParameter : public CMetadata
 {
 public:
-    CParameter(const std::string& name, const CQualifiedType* qualifiedType)
+    CParameter(const std::string& name, const CQualifiedType* qualifiedType, uint32_t index)
         : CMetadata(name)
         , QualifiedType(qualifiedType)
+        , Index(index)
     {}
 
-    // Return (*Function)(Arg0, Arg1, Arg2, Arg3 ... )
-    //    |                |     |     |     |   ...  
-    //    |                |     |     |     |   ...  Index Mapping
-    //    V                V     V     V     V   ...  
-    // [ -1 ] (*Function)([0],  [1] , [2] , [3]  ... )
+    // Return (*Function)(Arg0, Arg1, Arg2, Arg3 ... ArgN)
+    //    |                |     |     |     |   ...  |   
+    //    |                |     |     |     |   ...  |   Index Mapping
+    //    V                V     V     V     V   ...  V   
+    // [ N+1 ] (*Function)([0],  [1] , [2] , [3]  ... [N] )
     const CQualifiedType* QualifiedType;
+    uint32_t Index;
 };
 
 
