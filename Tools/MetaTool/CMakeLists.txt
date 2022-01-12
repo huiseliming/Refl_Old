@@ -19,7 +19,10 @@ target_link_directories(MetaTool PUBLIC ${LLVM_LIBRARY_DIRS})
 target_link_libraries(MetaTool PRIVATE libclang)
 target_link_libraries(MetaTool PRIVATE fmt::fmt)
 target_link_libraries(MetaTool PRIVATE cxxopts::cxxopts)
+target_link_libraries(MetaTool PRIVATE cppast)
 #target_link_libraries(MetaTool PUBLIC libclang ${CLANG_LIBS})
+
+target_compile_definitions(MetaTool PUBLIC META_TOOL)
 
 add_custom_command(TARGET MetaTool POST_BUILD        # Adds a post-build event to MyTest
     COMMAND ${CMAKE_COMMAND} -E copy_if_different     # which executes "cmake - E copy_if_different..."

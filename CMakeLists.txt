@@ -41,6 +41,7 @@ if(WIN32)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS OFF)
 endif()
 
+add_subdirectory(ThirdParty)
 add_subdirectory(Tools)
 add_subdirectory(Tests)
 

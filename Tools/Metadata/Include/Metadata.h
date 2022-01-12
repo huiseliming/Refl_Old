@@ -3,13 +3,32 @@
 #include <unordered_map>
 #include "MetadataApi.h"
 
+class CMetadata;
+
+struct CMetadataManager
+{
+private:
+    CMetadataManager() = default;
+public:
+    static CMetadataManager& Instance();
+protected:
+    friend class CMetadata;
+    void RegisterMetadata(CMetadata* Metadata);
+    uint64_t IdCounter{ 0 };
+    std::vector<CMetadata*> Metadatas;
+};
+
+
 class METADATA_API CMetadata
 {
-    static std::unordered_map<uint64_t, CMetadata*> Table;
+    friend class CMetadataManager;
 public:
     CMetadata(const std::string& InName)
         : Name(InName)
-    {}
+    {
+        CMetadataManager::Instance().RegisterMetadata(this);
+    }
+    virtual ~CMetadata() = default;
 
     std::string GetMetadataValue(const std::string& InKey)
     {
@@ -26,6 +45,7 @@ public:
     const std::string& GetName() { return Name; }
 
 protected:
+    uint64_t Id{UINT64_MAX};
     std::string Name;
     std::unordered_map<std::string, std::string> Metadata;
 };

@@ -1,4 +1,14 @@
 #include "Metadata.h"
 
-std::unordered_map<uint64_t, CMetadata*> CMetadata::Table;
+void CMetadataManager::RegisterMetadata(CMetadata* Metadata)
+{
+	Metadatas.push_back(Metadata);
+	Metadata->Id = IdCounter++;
+}
+
+CMetadataManager& CMetadataManager::Instance()
+{
+	static CMetadataManager Mgr;
+	return Mgr;
+}
 
