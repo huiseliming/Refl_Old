@@ -3,11 +3,11 @@
 #include "MetaValue.h"
 #include "Function.h"
 
-class METADATA_API CType : public CMetadata
+class METADATA_API CCppType : public CMetadata
 {
 
 public:
-    CType(const std::string& name, uint32_t InSize = 0)
+    CCppType(const std::string& name, uint32_t InSize = 0)
         : CMetadata(name)
         , Size(InSize)
     {
@@ -21,7 +21,7 @@ public:
 
 private:
     uint32_t Size;
-    std::vector<CType*       > BaseTypes;
+    std::vector<CCppType*       > BaseTypes;
     //std::vector<CConstructor*> Constructors;
     std::vector<CField*      > Fields;
     std::vector<CFunction*   > Functions;
@@ -38,6 +38,21 @@ enum EQualifiedTypeFlagBit : uint32_t
     EQTFB_Reference  = 0x8,
 };
 
+class CTypeManager
+{
+    CTypeManager();
+public:
+    static CTypeManager& Instance();
+
+
+
+
+    std::unordered_map<std::string, std::shared_ptr<CQualifiedType>> NameToQualifiedType;
+    std::unordered_map<std::string, std::shared_ptr<CCppType>> NameToCppType;
+
+};
+
+
 struct METADATA_API CQualifiedType
 {
 public:
@@ -51,11 +66,11 @@ public:
 
     CQualifiedType* GetPointee() { return Next.QualifiedType; }
     CQualifiedType* GetReferee() { return Next.QualifiedType; }
-    CType*          GetCppType() { return Next.Type; }
+    CCppType*          GetCppType() { return Next.Type; }
 
     union
     {
-        CType* Type;
+        CCppType* Type;
         CQualifiedType* QualifiedType;
     } Next;
     uint32_t QualifiedFlag{ EQTFB_Unqualfied };

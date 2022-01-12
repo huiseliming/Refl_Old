@@ -185,12 +185,12 @@ void PrintAst(std::ostream& out, const cppast::cpp_file& file)
                 CCodeGenerator& CodeGenerator = CCodeGenerator::Instance();
                 if (e.kind() == cppast::cpp_entity_kind::class_t)
                 {
-                    CType* Type = CodeGenerator.RequiredMetadata<CType>(e.name());
+                    CCppType* Type = CodeGenerator.RequiredMetadata<CCppType>(e.name());
                     CodeGenerator.PushMetadata(Type);
                 }
                 else if (e.kind() == cppast::cpp_entity_kind::member_variable_t)
                 {
-                    CType* Type = CodeGenerator.GetTopMetadata<CType>();
+                    CCppType* Type = CodeGenerator.GetTopMetadata<CCppType>();
                     CField* Field = CodeGenerator.RequiredMetadata<CField>(e.name());
                     Type->AddField(Field);
                     auto& CppMemberVariable = static_cast<const cppast::cpp_member_variable&>(e);

@@ -3,7 +3,7 @@
 
 class CQualifiedType;
 
-class CType;
+class CCppType;
 
 class CField : public CMetadata
 {
