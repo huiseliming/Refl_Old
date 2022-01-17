@@ -50,7 +50,7 @@ add_subdirectory(Tests)
 file(GLOB_RECURSE PublicHeader Include/*.h)
 file(GLOB_RECURSE PrivateHeader Source/*.h)
 file(GLOB_RECURSE PrivateSource Source/*.cpp)
-
+ 
 
 ## add the command that invokes the reflection parser executable
 ## whenever a header file in your project has changed

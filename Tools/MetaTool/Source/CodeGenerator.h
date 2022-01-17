@@ -1,11 +1,13 @@
 #pragma once
 #include <stack>
 #include "Metadata.h"
+#include "mustache.hpp"
+#include "Helper.h"
 
 class CCodeGenerator
 {
 protected:
-	CCodeGenerator() = default;
+	CCodeGenerator();
 	~CCodeGenerator();
 public:
 	static CCodeGenerator& Instance();
@@ -33,6 +35,13 @@ public:
 	{
 		MetadataStack.pop();
 	}
+	
+
+	kainjow::mustache::mustache HeaderTmpl;
+	kainjow::mustache::mustache SourceTmpl;
+	kainjow::mustache::data HeaderIncludeFile{ kainjow::mustache::data::type::list };
+	kainjow::mustache::data SourceIncludeFile{ kainjow::mustache::data::type::list };
+	kainjow::mustache::data ClassStaticInitializer{ kainjow::mustache::data::type::list };
 
 private:
 	std::stack<CMetadata*> MetadataStack;

@@ -11,10 +11,10 @@
 #include <cppast/libclang_parser.hpp> // for libclang_parser, libclang_compile_config, cpp_entity,...
 #include <cppast/visitor.hpp>         // for visit()
 
-#include "Type.h"
 #include "CodeGenerator.h"
 #include "Helper.h"
-
+#include "Type.h"
+#include "Class.h"
 
 // prints the AST entry of a cpp_entity (base class for all entities),
 // will only print a single line
@@ -24,8 +24,6 @@ void PrintEntity(std::ostream& out, const cppast::cpp_entity& e)
     {
 
     }
-
-
 
 
     // print name and the kind of the entity
@@ -146,6 +144,7 @@ void PrintAst(std::ostream& out, const cppast::cpp_file& file)
         }
         else
         {
+            std::function<void()> Hanle;
             bool bIsRequiredMetadata = false;
             if (!e.attributes().empty())
             {
@@ -185,14 +184,16 @@ void PrintAst(std::ostream& out, const cppast::cpp_file& file)
                 CCodeGenerator& CodeGenerator = CCodeGenerator::Instance();
                 if (e.kind() == cppast::cpp_entity_kind::class_t)
                 {
-                    CCppType* Type = CodeGenerator.RequiredMetadata<CCppType>(e.name());
-                    CodeGenerator.PushMetadata(Type);
+                    auto& CppClass = static_cast<const cppast::cpp_class&>(e);
+                    StaticClass<CType>()->SetName(CppClass.name());
+                    
+                    //CType* Type = CodeGenerator.RequiredMetadata<CType>(e.name());
+                    CodeGenerator.PushMetadata(StaticClass<CType>());
                 }
                 else if (e.kind() == cppast::cpp_entity_kind::member_variable_t)
                 {
-                    CCppType* Type = CodeGenerator.GetTopMetadata<CCppType>();
+                    CType* Type = CodeGenerator.GetTopMetadata<CType>();
                     CField* Field = CodeGenerator.RequiredMetadata<CField>(e.name());
-                    Type->AddField(Field);
                     auto& CppMemberVariable = static_cast<const cppast::cpp_member_variable&>(e);
                     auto& CppMemberVariableType = CppMemberVariable.type();
                     if (CppMemberVariableType.kind() == cppast::cpp_type_kind::builtin_t)
@@ -245,6 +246,7 @@ std::unique_ptr<cppast::cpp_file> ParseFile(const cppast::libclang_compile_confi
 
 int main(int ArgC, char* ArgV[]) try
 {
+    CCodeGenerator& CodeGenerator = CCodeGenerator::Instance();
     cxxopts::Options option_list("MetaTool",
         "MetaTool for CppEngine!\n");
     // clang-format off
@@ -381,6 +383,16 @@ int main(int ArgC, char* ArgV[]) try
         if (!file)
             return 2;
         PrintAst(std::cout, *file);
+
+        kainjow::mustache::data HeaderTmplData;
+        CodeGenerator.HeaderTmpl.render(CodeGenerator.HeaderIncludeFile);
+        std::string HeaderOutput = CodeGenerator.HeaderTmpl.render(HeaderTmplData);
+        std::cout << HeaderOutput << std::endl;
+        kainjow::mustache::data SourceTmplData;
+        SourceTmplData.set("IncludeFiles", CodeGenerator.SourceIncludeFile);
+        SourceTmplData.set("ClassStaticInitializer", CodeGenerator.ClassStaticInitializer);
+        std::string SourceOutput = CodeGenerator.SourceTmpl.render(SourceTmplData);
+        std::cout << SourceOutput << std::endl;
     }
 }
 catch (const cppast::libclang_error& ex)

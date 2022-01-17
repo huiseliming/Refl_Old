@@ -1,0 +1,10 @@
+{{#IncludeFiles}}
+#include "{{.}}"
+{{/IncludeFiles}}
+
+{{#ClassStaticInitializer}}
+CClass* {{ClassName}}::CLASS_STATIC_INITIALIZER()
+{
+
+}
+{{/ClassStaticInitializer}}

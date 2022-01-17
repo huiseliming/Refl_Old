@@ -1,5 +1,6 @@
 #include "Helper.h"
 #include <memory>
+#include <fstream>
 
 #define CONST_STRING(A, B) static std::string A = #B
 
@@ -83,4 +84,17 @@ CQualifiedType* Convert(const cppast::cpp_type& InCppType)
 		}
 	}
 	return nullptr;
+}
+
+std::string LoadStringFromFile(const std::string& InFile)
+{
+	std::string Output;
+	std::ifstream IfStream(InFile);
+	if (!IfStream) return Output;
+	IfStream.seekg(0, std::ios::end);
+	Output.reserve(static_cast<std::string::size_type>(IfStream.tellg()));
+	IfStream.seekg(0, std::ios::beg);
+	Output.assign((std::istreambuf_iterator<char>(IfStream)), std::istreambuf_iterator<char>());
+	IfStream.close();
+	return Output;
 }

@@ -9,6 +9,7 @@ set(CLANG_LIBS clang)
 
 file(GLOB_RECURSE MetaToolSource Source/*.cpp Source/*.h)
 
+
 add_executable(MetaTool ${MetaToolSource})
 
 target_link_libraries(MetaTool PUBLIC Metadata)
@@ -21,6 +22,17 @@ target_link_libraries(MetaTool PRIVATE fmt::fmt)
 target_link_libraries(MetaTool PRIVATE cxxopts::cxxopts)
 target_link_libraries(MetaTool PRIVATE cppast)
 #target_link_libraries(MetaTool PUBLIC libclang ${CLANG_LIBS})
+
+file(READ ${CMAKE_CURRENT_SOURCE_DIR}/Template/GeneratedHeader.template GENERATED_HEADER_TEMPLATE_STRING)
+file(READ ${CMAKE_CURRENT_SOURCE_DIR}/Template/GeneratedSource.template GENERATED_SOURCE_TEMPLATE_STRING)
+string(REPLACE "\"" "\\\"" GENERATED_HEADER_TEMPLATE_STRING ${GENERATED_HEADER_TEMPLATE_STRING})
+string(REPLACE "\n" "\"\n\"" GENERATED_HEADER_TEMPLATE_STRING ${GENERATED_HEADER_TEMPLATE_STRING})
+string(REPLACE "\"" "\\\"" GENERATED_SOURCE_TEMPLATE_STRING ${GENERATED_SOURCE_TEMPLATE_STRING})
+string(REPLACE "\n" "\"\n\"" GENERATED_SOURCE_TEMPLATE_STRING ${GENERATED_SOURCE_TEMPLATE_STRING})
+configure_file(Template/GeneratedTemplates.cpp.template ${CMAKE_CURRENT_BINARY_DIR}/GeneratedTemplates.cpp)
+
+add_library(GeneratedTemplates STATIC ${CMAKE_CURRENT_BINARY_DIR}/GeneratedTemplates.cpp)
+target_link_libraries(MetaTool PRIVATE GeneratedTemplates)
 
 target_compile_definitions(MetaTool PUBLIC META_TOOL)
 
