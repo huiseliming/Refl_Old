@@ -16,6 +16,7 @@ private:
     uint32_t Size;
 };
 
+
 //
 //enum EQualifiedTypeFlagBit : uint32_t
 //{

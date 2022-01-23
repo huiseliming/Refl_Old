@@ -33,15 +33,6 @@ public:
 };
 
 
-template<typename T>
-CType* StaticClass()
-{
-    static CClass Class("");
-    return &Class;
-}
-
-
-
 
 
 

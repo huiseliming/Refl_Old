@@ -2,9 +2,12 @@
 #include "{{.}}"
 {{/IncludeFiles}}
 
-{{#ClassStaticInitializer}}
+{{#ClassStaticInitializerList}}
 CClass* {{ClassName}}::CLASS_STATIC_INITIALIZER()
 {
-
+    StaticClass<{{ClassName}}>()->SetName("{{ClassName}}");
+    {{#PropertyInitializerList}}
+    {{PropertyName}}
+    {{/PropertyInitializerList}}
 }
-{{/ClassStaticInitializer}}
+{{/ClassStaticInitializerList}}

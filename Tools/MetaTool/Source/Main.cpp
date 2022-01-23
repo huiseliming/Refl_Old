@@ -10,7 +10,9 @@
 #include <cppast/cpp_namespace.hpp>          // for cpp_namespace
 #include <cppast/libclang_parser.hpp> // for libclang_parser, libclang_compile_config, cpp_entity,...
 #include <cppast/visitor.hpp>         // for visit()
+#include <cppast/cpp_member_function.hpp>
 
+#include "StaticType.h"
 #include "CodeGenerator.h"
 #include "Helper.h"
 #include "Type.h"
@@ -129,41 +131,25 @@ void PrintAst(std::ostream& out, const cppast::cpp_file& file)
     std::string prefix; // the current prefix string
     // recursively visit file and all children
     cppast::visit(file, [&](const cppast::cpp_entity& e, cppast::visitor_info info) {
-        if (e.kind() == cppast::cpp_entity_kind::file_t || cppast::is_templated(e)
-            || cppast::is_friended(e))
+        if (e.kind() == cppast::cpp_entity_kind::file_t || cppast::is_templated(e) || cppast::is_friended(e))
+        {
             // no need to do anything for a file,
             // templated and friended entities are just proxies, so skip those as well
             // return true to continue visit for children
             return true;
+        }
         else if (info.event == cppast::visitor_info::container_entity_exit)
         {
             // we have visited all children of a container,
             // remove prefix
             prefix.pop_back();
             prefix.pop_back();
+            if(CCodeGenerator::Instance().ContainerEntityExitCallbackStack.top())
+                CCodeGenerator::Instance().ContainerEntityExitCallbackStack.top()();
+            CCodeGenerator::Instance().ContainerEntityExitCallbackStack.pop();
         }
         else
         {
-            std::function<void()> Hanle;
-            bool bIsRequiredMetadata = false;
-            if (!e.attributes().empty())
-            {
-                for (const cppast::cpp_attribute& attribute : e.attributes())
-                {
-                    if (attribute.name() == "annotate")
-                    {
-                        if (attribute.arguments().has_value())
-                        {
-                            auto AttributeArguments = attribute.arguments().value();
-                            if (!AttributeArguments.empty() && AttributeArguments.front().spelling == "\"Meta\"")
-                            {
-                                bIsRequiredMetadata = true;
-                            }
-                        }
-                    }
-                }
-            }
-
             out << prefix; // print prefix for previous entities
             // calculate next prefix
             if (info.last_child)
@@ -179,43 +165,73 @@ void PrintAst(std::ostream& out, const cppast::cpp_file& file)
                 out << "|-";
             }
             PrintEntity(out, e);
+
+            std::function<void()> ContainerEntityExitCallback;
+            std::function<void()> Hanle;
+            bool bIsRequiredMetadata = false;
+            if (!e.attributes().empty())
+            {
+                for (const cppast::cpp_attribute& attribute : e.attributes())
+                {
+                    if (attribute.name() == "annotate")
+                    {
+                        if (attribute.arguments().has_value())
+                        {
+                            auto AttributeArguments = attribute.arguments().value();
+                            if (!AttributeArguments.empty() && AttributeArguments.front().spelling == "\"Metadata\"")
+                            {
+                                bIsRequiredMetadata = true;
+                            }
+                        }
+                    }
+                }
+            }
             if (bIsRequiredMetadata)
             {
                 CCodeGenerator& CodeGenerator = CCodeGenerator::Instance();
                 if (e.kind() == cppast::cpp_entity_kind::class_t)
                 {
                     auto& CppClass = static_cast<const cppast::cpp_class&>(e);
+                    CCodeGenerator::Instance().ClassBegin(CppClass.name());
+                    ContainerEntityExitCallback = []{ CCodeGenerator::Instance().ClassEnd(); };
                     StaticClass<CType>()->SetName(CppClass.name());
-                    
                     //CType* Type = CodeGenerator.RequiredMetadata<CType>(e.name());
-                    CodeGenerator.PushMetadata(StaticClass<CType>());
+                    //CodeGenerator.PushMetadata(StaticClass<CType>());
                 }
                 else if (e.kind() == cppast::cpp_entity_kind::member_variable_t)
                 {
-                    CType* Type = CodeGenerator.GetTopMetadata<CType>();
-                    CField* Field = CodeGenerator.RequiredMetadata<CField>(e.name());
                     auto& CppMemberVariable = static_cast<const cppast::cpp_member_variable&>(e);
-                    auto& CppMemberVariableType = CppMemberVariable.type();
-                    if (CppMemberVariableType.kind() == cppast::cpp_type_kind::builtin_t)
-                    {
-                        auto& CppMemberVariableBuiltinType = static_cast<const cppast::cpp_builtin_type&>(CppMemberVariableType);
-                        //Field->QualifiedType.Type = ToString(CppMemberVariableBuiltinType.builtin_type_kind());
-                        //cppast::to_string(cppast::cpp_type_kind::pointer_t);
-                    }
-                    if (CppMemberVariableType.kind() == cppast::cpp_type_kind::pointer_t)
-                    {
-                        auto& CppMemberVariablePointerType = static_cast<const cppast::cpp_pointer_type&>(CppMemberVariableType);
-                        CppMemberVariablePointerType.pointee();
-                        auto& CppMemberVariableReferenceType = static_cast<const cppast::cpp_reference_type&>(CppMemberVariableType);
-                        CppMemberVariableReferenceType.referee();
-                        auto& CppMemberVariableCVQualifiedType = static_cast<const cppast::cpp_cv_qualified_type&>(CppMemberVariableType);
-                        CppMemberVariableCVQualifiedType.cv_qualifier();
-                    }
+                    CCodeGenerator::Instance().PropertyBegin(CppMemberVariable.name());
+                    CCodeGenerator::Instance().PropertyEnd();
+                    //CType* Type = CodeGenerator.GetTopMetadata<CType>();
+                    ////CField* Field = CodeGenerator.RequiredMetadata<CField>(e.name());
+                    //auto& CppMemberVariableType = CppMemberVariable.type();
+                    //if (CppMemberVariableType.kind() == cppast::cpp_type_kind::builtin_t)
+                    //{
+                    //    auto& CppMemberVariableBuiltinType = static_cast<const cppast::cpp_builtin_type&>(CppMemberVariableType);
+                    //    //Field->QualifiedType.Type = ToString(CppMemberVariableBuiltinType.builtin_type_kind());
+                    //    //cppast::to_string(cppast::cpp_type_kind::pointer_t);
+                    //}
+                    //if (CppMemberVariableType.kind() == cppast::cpp_type_kind::pointer_t)
+                    //{
+                    //    auto& CppMemberVariablePointerType = static_cast<const cppast::cpp_pointer_type&>(CppMemberVariableType);
+                    //    CppMemberVariablePointerType.pointee();
+                    //    auto& CppMemberVariableReferenceType = static_cast<const cppast::cpp_reference_type&>(CppMemberVariableType);
+                    //    CppMemberVariableReferenceType.referee();
+                    //    auto& CppMemberVariableCVQualifiedType = static_cast<const cppast::cpp_cv_qualified_type&>(CppMemberVariableType);
+                    //    CppMemberVariableCVQualifiedType.cv_qualifier();
+                    //}
                 }
                 else if (e.kind() == cppast::cpp_entity_kind::member_function_t)
                 {
-
+                    auto& CppMemberFunction = static_cast<const cppast::cpp_member_function&>(e);
+                    CCodeGenerator::Instance().FunctionBegin(CppMemberFunction.name());
+                    ContainerEntityExitCallback = [] { CCodeGenerator::Instance().FunctionEnd(); };
                 }
+            }
+            if (info.event == cppast::visitor_info::container_entity_enter)
+            {
+                CCodeGenerator::Instance().ContainerEntityExitCallbackStack.push(ContainerEntityExitCallback);
             }
         }
 
@@ -383,16 +399,17 @@ int main(int ArgC, char* ArgV[]) try
         if (!file)
             return 2;
         PrintAst(std::cout, *file);
-
-        kainjow::mustache::data HeaderTmplData;
-        CodeGenerator.HeaderTmpl.render(CodeGenerator.HeaderIncludeFile);
-        std::string HeaderOutput = CodeGenerator.HeaderTmpl.render(HeaderTmplData);
-        std::cout << HeaderOutput << std::endl;
-        kainjow::mustache::data SourceTmplData;
-        SourceTmplData.set("IncludeFiles", CodeGenerator.SourceIncludeFile);
-        SourceTmplData.set("ClassStaticInitializer", CodeGenerator.ClassStaticInitializer);
-        std::string SourceOutput = CodeGenerator.SourceTmpl.render(SourceTmplData);
-        std::cout << SourceOutput << std::endl;
+        std::cout << CCodeGenerator::Instance().GenerateGeneratedFile();
+        //kainjow::mustache::data HeaderTmplData;
+        //CodeGenerator.HeaderTmpl.render(CodeGenerator.HeaderIncludeFile);
+        //std::string HeaderOutput = CodeGenerator.HeaderTmpl.render(HeaderTmplData);
+        //std::cout << HeaderOutput << std::endl;
+        //kainjow::mustache::data SourceTmplData;
+        //SourceTmplData.list_value().
+        //SourceTmplData.set("IncludeFiles", CodeGenerator.SourceIncludeFile);
+        //SourceTmplData.set("ClassStaticInitializer", CodeGenerator.ClassStaticInitializer);
+        //std::string SourceOutput = CodeGenerator.SourceTmpl.render(SourceTmplData);
+        //std::cout << SourceOutput << std::endl;
     }
 }
 catch (const cppast::libclang_error& ex)
