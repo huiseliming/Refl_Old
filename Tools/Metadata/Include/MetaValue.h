@@ -5,37 +5,17 @@ class CQualifiedType;
 
 class CCppType;
 
-class CField : public CMetadata
+class CProperty : public CMetadata
 {
-public:
-    CField(const std::string& name, const CQualifiedType* qualifiedType = nullptr, size_t offset = 0)
+    CProperty(const std::string& name, const CQualifiedType* qualifiedType = nullptr, size_t offset = 0)
         : CMetadata(name)
-        , QualifiedType(qualifiedType)
-        , Offset(offset)
     {}
 
-    const CQualifiedType* QualifiedType;
-    size_t Offset;
+    virtual void* GetVariableAddress() = 0;
+
+
+
 };
-
-class CParameter : public CMetadata
-{
-public:
-    CParameter(const std::string& name, const CQualifiedType* qualifiedType, uint32_t index)
-        : CMetadata(name)
-        , QualifiedType(qualifiedType)
-        , Index(index)
-    {}
-
-    // Return (*Function)(Arg0, Arg1, Arg2, Arg3 ... ArgN)
-    //    |                |     |     |     |   ...  |   
-    //    |                |     |     |     |   ...  |   Index Mapping
-    //    V                V     V     V     V   ...  V   
-    // [ N+1 ] (*Function)([0],  [1] , [2] , [3]  ... [N] )
-    const CQualifiedType* QualifiedType;
-    uint32_t Index;
-};
-
 
 //
 //template<typename CppType>

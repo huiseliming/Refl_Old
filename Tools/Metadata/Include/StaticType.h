@@ -8,17 +8,16 @@ CType* StaticType()
 {
     static 
     std::conditional_t
+    <
+        std::is_class_v<T>,
+        CClass, 
+        std::conditional_t
         <
-            std::is_class_v<T>,
-            CClass, 
-            std::conditional_t
-                <
-                    std::is_enum_v<T>, 
-                    CEnum,
-                    CType
-                >
+            std::is_enum_v<T>, 
+            CEnum,
+            CType
         >
-    Type("");
+    > Type("");
     return &Type;
 }
 

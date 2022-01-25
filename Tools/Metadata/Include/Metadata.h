@@ -4,13 +4,13 @@
 #include <unordered_map>
 #include "MetadataApi.h"
 
-#ifdef __REFLECT__
-#define CLASS(...)     __attribute__((annotate("Metadata" __VA_OPT__(,) #__VA_ARGS__)))
-#define STRUCT(...)    __attribute__((annotate("Metadata" __VA_OPT__(,) #__VA_ARGS__)))
-#define ENUM(...)      __attribute__((annotate("Metadata" __VA_OPT__(,) #__VA_ARGS__)))
-#define PROPERTY(...)  __attribute__((annotate("Metadata" __VA_OPT__(,) #__VA_ARGS__)))
-#define FUNCTION(...)  __attribute__((annotate("Metadata" __VA_OPT__(,) #__VA_ARGS__)))
-#define METADATA(...)  __attribute__((annotate("Metadata" __VA_OPT__(,) #__VA_ARGS__)))
+#ifdef __METADATA__
+#define METADATA(...)  __attribute__((annotate("Metadata" __VA_OPT__(",") #__VA_ARGS__)))
+#define CLASS(...)     METADATA(__VA_ARGS__)
+#define STRUCT(...)    METADATA(__VA_ARGS__)
+#define ENUM(...)      METADATA(__VA_ARGS__)
+#define PROPERTY(...)  METADATA(__VA_ARGS__)
+#define FUNCTION(...)  METADATA(__VA_ARGS__)
 #else
 #define CLASS(...)
 #define STRUCT(...)
@@ -20,11 +20,10 @@
 #define METADATA(...)
 #endif
 
-#define GENERATED_META_BODY()                        \
+#define GENERATED_BODY()                        \
 public:                                              \
-static FClass* StaticClass();                        \
-static FMeta* StaticMeta();                          \
-static UInt32 MetaId;
+static CClass* StaticClass();                        \
+static int64_t MetadataId;
 
 class CMetadata;
 

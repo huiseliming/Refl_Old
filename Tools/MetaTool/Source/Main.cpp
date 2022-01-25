@@ -258,10 +258,28 @@ std::unique_ptr<cppast::cpp_file> ParseFile(const cppast::libclang_compile_confi
     return file;
 }
 
-
-
-int main(int ArgC, char* ArgV[]) try
+int main(int argc, char** argv) try
 {
+    int ArgC;
+    char** ArgV;
+    //std::string currentPath = std::filesystem::current_path().string();
+    if (argc == 1) {
+        static std::vector<const char*> CommandLines = {
+            "",
+            "--database_dir",  "../../",//"../",
+            "--std", "c++20",
+            "--macro_definition", "__METADATA__",
+            "../../../Source/Engine.h",
+        };
+        CommandLines[0] = argv[0];
+        ArgC = CommandLines.size();
+        ArgV = (char**)CommandLines.data();
+    }
+    else
+    {
+        ArgC = argc;
+        ArgV = argv;
+    }
     CCodeGenerator& CodeGenerator = CCodeGenerator::Instance();
     cxxopts::Options option_list("MetaTool",
         "MetaTool for CppEngine!\n");

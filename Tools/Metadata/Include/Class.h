@@ -1,6 +1,9 @@
 #pragma once
 #include "Type.h"
 
+
+
+
 class METADATA_API CClass : public CType
 {
 public:
@@ -10,15 +13,19 @@ public:
         //Manager().RegisterType(this);
     }
 
-    void AddField(CField* InField)
+
+    void AddProperty(CProperty* Property)
     {
-        Fields.push_back(InField);
+        Properties.push_back(Property);
     }
+
+    CProperty* FirstProperty();
+    CProperty* LastProperty();
 
 private:
     std::vector<CCppType*> Bases;
     //std::vector<CConstructor*> Constructors;
-    std::vector<CField*> Fields;
+    std::vector<CProperty*> Properties;
     std::vector<CFunction*> Functions;
 };
 
