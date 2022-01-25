@@ -47,9 +47,10 @@ public:
 
 	void GetHeaderIncludeFilesData();
 
-	void ClassBegin(const std::string& InClassName)
+	kainjow::mustache::data& ClassBegin(const std::string& InClassName)
 	{
 		ClassStaticInitializer.set("ClassName", InClassName);
+		return ClassStaticInitializer;
 	}
 
 	void ClassEnd()
@@ -60,9 +61,10 @@ public:
 		ClassStaticInitializer = kainjow::mustache::data();
 	}
 
-	void PropertyBegin(const std::string& InPropertyName)
+	kainjow::mustache::data& PropertyBegin(const std::string& InPropertyName)
 	{
 		PropertyInitializer.set("PropertyName", InPropertyName);
+		return PropertyInitializer;
 	}
 
 	void PropertyEnd()
@@ -71,9 +73,10 @@ public:
 		PropertyInitializer = kainjow::mustache::data();
 	}
 
-	void FunctionBegin(const std::string& InFunctionName)
+	kainjow::mustache::data& FunctionBegin(const std::string& InFunctionName)
 	{
 		FunctionInitializer.set("FunctionName", InFunctionName);
+		return FunctionInitializer;
 	}
 
 	void FunctionEnd()

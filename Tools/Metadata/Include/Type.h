@@ -10,12 +10,10 @@ public:
         : CMetadata(InName)
         , Size(InSize)
     {
-        //Manager().RegisterType(this);
     }
 private:
     uint32_t Size;
 };
-
 
 //
 //enum EQualifiedTypeFlagBit : uint32_t

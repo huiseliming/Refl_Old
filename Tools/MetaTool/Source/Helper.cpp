@@ -65,26 +65,26 @@ const std::string& ToString(cppast::cpp_builtin_type_kind BuiltinTypeKind)
 #undef TO_STRING
 }
 
-CQualifiedType* Convert(const cppast::cpp_type& InCppType)
-{
-	std::shared_ptr<CQualifiedType> QualifiedType;
-	while (true)
-	{
-		if (InCppType.kind() == cppast::cpp_type_kind::reference_t)
-		{
-			const auto& RefType = static_cast<const cppast::cpp_reference_type&>(InCppType);
-		}
-		if (InCppType.kind() == cppast::cpp_type_kind::pointer_t)
-		{
-			const auto& PtrType = static_cast<const cppast::cpp_pointer_type&>(InCppType);
-		}
-		if (InCppType.kind() == cppast::cpp_type_kind::cv_qualified_t)
-		{
-			const auto& CVType = static_cast<const cppast::cpp_cv_qualified_type&>(InCppType);
-		}
-	}
-	return nullptr;
-}
+//CType* Convert(const cppast::cpp_type& InCppType)
+//{
+//	std::shared_ptr<CType> QualifiedType;
+//	while (true)
+//	{
+//		if (InCppType.kind() == cppast::cpp_type_kind::reference_t)
+//		{
+//			const auto& RefType = static_cast<const cppast::cpp_reference_type&>(InCppType);
+//		}
+//		if (InCppType.kind() == cppast::cpp_type_kind::pointer_t)
+//		{
+//			const auto& PtrType = static_cast<const cppast::cpp_pointer_type&>(InCppType);
+//		}
+//		if (InCppType.kind() == cppast::cpp_type_kind::cv_qualified_t)
+//		{
+//			const auto& CVType = static_cast<const cppast::cpp_cv_qualified_type&>(InCppType);
+//		}
+//	}
+//	return nullptr;
+//}
 
 std::string LoadStringFromFile(const std::string& InFile)
 {

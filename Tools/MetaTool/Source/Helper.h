@@ -5,7 +5,7 @@
 
 const std::string& ToString(cppast::cpp_builtin_type_kind BuiltinTypeKind);
 
-CQualifiedType* Convert(const cppast::cpp_type& InCppType);
+//CType* Convert(const cppast::cpp_type& InCppType);
 
 std::string LoadStringFromFile(const std::string& InFile);
 

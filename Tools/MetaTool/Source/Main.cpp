@@ -201,7 +201,8 @@ void PrintAst(std::ostream& out, const cppast::cpp_file& file)
                 else if (e.kind() == cppast::cpp_entity_kind::member_variable_t)
                 {
                     auto& CppMemberVariable = static_cast<const cppast::cpp_member_variable&>(e);
-                    CCodeGenerator::Instance().PropertyBegin(CppMemberVariable.name());
+                    auto& PropertyData = CCodeGenerator::Instance().PropertyBegin(CppMemberVariable.name());
+
                     CCodeGenerator::Instance().PropertyEnd();
                     //CType* Type = CodeGenerator.GetTopMetadata<CType>();
                     ////CField* Field = CodeGenerator.RequiredMetadata<CField>(e.name());

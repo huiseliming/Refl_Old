@@ -20,26 +20,11 @@
 #define METADATA(...)
 #endif
 
-#define GENERATED_BODY()                        \
-public:                                              \
-static CClass* StaticClass();                        \
-static int64_t MetadataId;
-
-class CMetadata;
-
-struct CMetadataManager
-{
-private:
-    CMetadataManager() = default;
-public:
-    static CMetadataManager& Instance();
-protected:
-    friend class CMetadata;
-    void RegisterMetadata(CMetadata* Metadata);
-    uint64_t IdCounter{ 0 };
-    std::vector<CMetadata*> Metadatas;
-};
-
+#define GENERATED_BODY()                   \
+public:                                    \
+static CClass* CLASS_STATIC_INITIALIZER(); \
+static CClass* StaticClass();              \
+static int64_t MetadataId;                 \
 
 class METADATA_API CMetadata
 {
@@ -48,34 +33,40 @@ public:
     CMetadata(const std::string& InName)
         : Name(InName)
     {
-        CMetadataManager::Instance().RegisterMetadata(this);
+        Metadatas.push_back(this);
+        Id = IdCounter++;
     }
     virtual ~CMetadata() = default;
 
     std::string GetMetadataValue(const std::string& InKey)
     {
-        if (auto it = Metadata.find(InKey); it != Metadata.end())
+        if (auto it = KeyToValue.find(InKey); it != KeyToValue.end())
             return it->second;
         return nullptr;
     }
 
     bool ContainsMetadataKey(const std::string& InKey)
     {
-        return Metadata.contains(InKey);
+        return KeyToValue.contains(InKey);
     }
 
-    void AddMetadata(const std::string& InKey, const std::string& InValue)
+    void AddData(const std::string& InKey, const std::string& InValue)
     {
-        if (Metadata.contains(InKey)) assert(false);
-        Metadata.insert_or_assign(InKey, InValue);
+        if (KeyToValue.contains(InKey)) assert(false);
+        KeyToValue.insert_or_assign(InKey, InValue);
     }
-    
+
     void SetName(const std::string& InName) { Name = InName; }
 
     const std::string& GetName() { return Name; }
 
 protected:
-    uint64_t Id{UINT64_MAX};
+    int64_t Id{INT64_MAX};
     std::string Name;
-    std::unordered_map<std::string, std::string> Metadata;
+    std::unordered_map<std::string, std::string> KeyToValue;
+
+private:
+    static int64_t IdCounter;
+    static std::vector<CMetadata*> Metadatas;
 };
+

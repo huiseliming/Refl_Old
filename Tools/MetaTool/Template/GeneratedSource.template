@@ -3,11 +3,25 @@
 {{/IncludeFiles}}
 
 {{#ClassStaticInitializerList}}
+CClass* {{ClassName}}::StaticClass()
+{
+    static CClass* Class = {{ClassName}}::CLASS_STATIC_INITIALIZER();
+    return Class;
+}
+
 CClass* {{ClassName}}::CLASS_STATIC_INITIALIZER()
 {
-    StaticClass<{{ClassName}}>()->SetName("{{ClassName}}");
+    static bool callOnce = false;
+    assert(callOnce == false);
+    callOnce = true;
+    CClass* Class = StaticClass<{{ClassName}}>();
+    Class->SetName("{{ClassName}}");
     {{#PropertyInitializerList}}
-    {{PropertyName}}
+    static {{PropertyTypeClass}} PROP_{{PropertyName}}("{{PropertyName}}");
+    PROP_{{PropertyName}}.AddressOffset = offsetof({{ClassName}}, {{PropertyName}});
+    
+    Class->AddProperty(&PROP_{{PropertyName}});
     {{/PropertyInitializerList}}
+    return Class;
 }
 {{/ClassStaticInitializerList}}

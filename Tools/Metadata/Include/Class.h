@@ -19,11 +19,9 @@ public:
         Properties.push_back(Property);
     }
 
-    CProperty* FirstProperty();
-    CProperty* LastProperty();
 
 private:
-    std::vector<CCppType*> Bases;
+    std::vector<CType*> Bases;
     //std::vector<CConstructor*> Constructors;
     std::vector<CProperty*> Properties;
     std::vector<CFunction*> Functions;
