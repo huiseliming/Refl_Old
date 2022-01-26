@@ -1,6 +1,6 @@
 #pragma once
 #include "Metadata.h"
-#include "MetaValue.h"
+#include "Property.h"
 #include "Function.h"
 
 class METADATA_API CType : public CMetadata

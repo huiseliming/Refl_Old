@@ -2,7 +2,7 @@
 #include <vector>
 #include <memory>
 #include "Metadata.h"
-#include "MetaValue.h"
+#include "Property.h"
 
 
 class METADATA_API CFunction : public CMetadata
