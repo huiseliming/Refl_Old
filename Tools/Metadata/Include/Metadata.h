@@ -30,40 +30,40 @@ class METADATA_API CMetadata
 {
     friend class CMetadataManager;
 public:
-    CMetadata(const std::string& InName)
-        : Name(InName)
+    CMetadata(const std::string& Name)
+        : Name_(Name)
     {
         Metadatas.push_back(this);
-        Id = IdCounter++;
+        Id_ = IdCounter++;
     }
     virtual ~CMetadata() = default;
 
-    std::string GetMetadataValue(const std::string& InKey)
+    std::string GetMetadataValue(const std::string& Key)
     {
-        if (auto it = KeyToValue.find(InKey); it != KeyToValue.end())
+        if (auto it = KeyToValue_.find(Key); it != KeyToValue_.end())
             return it->second;
         return nullptr;
     }
 
-    bool ContainsMetadataKey(const std::string& InKey)
+    bool ContainsMetadataKey(const std::string& Key)
     {
-        return KeyToValue.contains(InKey);
+        return KeyToValue_.contains(Key);
     }
 
-    void AddData(const std::string& InKey, const std::string& InValue)
+    void AddData(const std::string& Key, const std::string& Value)
     {
-        if (KeyToValue.contains(InKey)) assert(false);
-        KeyToValue.insert_or_assign(InKey, InValue);
+        if (KeyToValue_.contains(Key)) assert(false);
+        KeyToValue_.insert_or_assign(Key, Value);
     }
 
-    void SetName(const std::string& InName) { Name = InName; }
+    void SetName(const std::string& Name) { Name_ = Name; }
 
-    const std::string& GetName() { return Name; }
+    const std::string& GetName() { return Name_; }
 
 protected:
-    int64_t Id{INT64_MAX};
-    std::string Name;
-    std::unordered_map<std::string, std::string> KeyToValue;
+    int64_t Id_{INT64_MAX};
+    std::string Name_;
+    std::unordered_map<std::string, std::string> KeyToValue_;
 
 private:
     static int64_t IdCounter;

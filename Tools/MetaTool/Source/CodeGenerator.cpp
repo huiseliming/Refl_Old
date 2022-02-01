@@ -2,8 +2,8 @@
 #include "GeneratedTemplates.h"
 
 CCodeGenerator::CCodeGenerator()
-	: HeaderTmpl(GeneratedTemplates::HeaderTemplate)
-	, SourceTmpl(GeneratedTemplates::SourceTemplate)
+	: HeaderTmpl_(GeneratedTemplates::HeaderTemplate)
+	, SourceTmpl_(GeneratedTemplates::SourceTemplate)
 {
 }
 

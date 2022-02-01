@@ -33,4 +33,9 @@ CClass* StaticClass()
     return reinterpret_cast<CClass*>(StaticType<T>());
 }
 
-
+struct CStaticString
+{
+    static const std::string Empty;
+    static const std::string True;
+    static const std::string False;
+};

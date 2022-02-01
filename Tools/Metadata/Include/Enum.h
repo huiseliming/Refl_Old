@@ -16,7 +16,7 @@ public:
     uint64_t ToValue(const std::string& InName);
 
 private:
-    std::unordered_map<uint64_t, std::string> ValueToName;
-    std::unordered_map<std::string, uint64_t> NameToValue;
+    std::unordered_map<uint64_t, std::string> ValueToName_;
+    std::unordered_map<std::string, uint64_t> NameToValue_;
     
 };

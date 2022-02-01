@@ -19,7 +19,7 @@ CClass* {{ClassName}}::CLASS_STATIC_INITIALIZER()
     {{#PropertyInitializerList}}
     static {{PropertyTypeClass}} PROP_{{PropertyName}}("{{PropertyName}}");
     PROP_{{PropertyName}}.AddressOffset = offsetof({{ClassName}}, {{PropertyName}});
-    
+    PROP_{{PropertyName}}.SetFlag({{PropertyFlags}});
     Class->AddProperty(&PROP_{{PropertyName}});
     {{/PropertyInitializerList}}
     return Class;

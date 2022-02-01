@@ -34,3 +34,6 @@
 /build
 /.vs
 /.cache
+
+*.generated.h
+*.generated.cpp

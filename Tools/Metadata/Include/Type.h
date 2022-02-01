@@ -1,18 +1,38 @@
 #pragma once
+#include <functional>
 #include "Metadata.h"
-#include "Property.h"
-#include "Function.h"
+
+class CClass;
+class CEnum;
 
 class METADATA_API CType : public CMetadata
 {
 public:
     CType(const std::string& InName, uint32_t InSize = 0)
         : CMetadata(InName)
-        , Size(InSize)
+        , Size_(InSize)
     {
     }
+    void SetSize(uint32_t Size) { Size_ = Size; }
+    uint32_t GetSize() { return Size_; }
+
+    static std::unordered_map<std::string, CType*>& StaticTable();
+    static std::unordered_map<std::string, CType*>& NameToType;
+    static std::list<std::function<void()>> PostStaticInitializerList();
+
 private:
-    uint32_t Size;
+    uint32_t Size_;
+};
+
+template<typename T>
+struct TAutoInitializer
+{
+    TAutoInitializer()
+    {
+        const CClass* Class = T::StaticClass();
+        assert(!CType::StaticTable().contains(Class->GetName()));
+        CType::StaticTable().insert(Class->GetName(), Class);
+    }
 };
 
 //

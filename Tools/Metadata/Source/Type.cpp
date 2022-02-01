@@ -1,6 +1,20 @@
 #include "Type.h"
 #include <cassert>
 
+std::unordered_map<std::string, CType*>& CType::NameToType = CType::StaticTable();
+
+std::unordered_map<std::string, CType*>& CType::StaticTable()
+{
+    static std::unordered_map<std::string, CType*> Table;
+    return Table;
+}
+
+std::list<std::function<void()>> CType::PostStaticInitializerList()
+{
+    static std::list<std::function<void()>> StaticInitializerList;
+    return StaticInitializerList;
+}
+
 //CTypeManager::CTypeManager()
 //{
 //#define STATIC_TYPE(A, B) static CCppType A##Type(#B, sizeof(B))

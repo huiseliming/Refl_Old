@@ -12,104 +12,74 @@ protected:
 public:
 	static CCodeGenerator& Instance();
 
-	void PushMetadata(CMetadata* Metadata)
-	{
-		MetadataStack.push(Metadata);
-	}
-
-	template<typename T = CMetadata>
-	T* GetTopMetadata()
-	{
-		return reinterpret_cast<T*>(MetadataStack.top());
-	}
-
-	void PopMetadata()
-	{
-		MetadataStack.pop();
-	}
-	
-
-	void PushMustacheData(CMetadata* Metadata)
-	{
-		MustacheDataStack.push(Metadata);
-	}
-
-	template<typename T = CMetadata>
-	T* GetTopMustacheData()
-	{
-		return reinterpret_cast<T*>(MustacheDataStack.top());
-	}
-
-	void PopMustacheData()
-	{
-		MustacheDataStack.pop();
-	}
-
 	void GetHeaderIncludeFilesData();
 
 	kainjow::mustache::data& ClassBegin(const std::string& InClassName)
 	{
-		ClassStaticInitializer.set("ClassName", InClassName);
-		return ClassStaticInitializer;
+		ClassStaticInitializer_.set("ClassName", InClassName);
+		return ClassStaticInitializer_;
 	}
 
 	void ClassEnd()
 	{
-		ClassStaticInitializer.set("FunctionInitializerList", FunctionInitializerList);
-		ClassStaticInitializer.set("PropertyInitializerList", PropertyInitializerList);
-		ClassStaticInitializerList.push_back(ClassStaticInitializer);
-		ClassStaticInitializer = kainjow::mustache::data();
+		ClassStaticInitializer_.set("PropertyInitializerFunctionList", PropertyInitializerFunctionList_);
+		ClassStaticInitializer_.set("FunctionInitializerList", FunctionInitializerList_);
+		ClassStaticInitializer_.set("PropertyInitializerList", PropertyInitializerList_);
+		ClassStaticInitializerList_.push_back(ClassStaticInitializer_);
+		ClassStaticInitializer_ = kainjow::mustache::data();
 	}
 
 	kainjow::mustache::data& PropertyBegin(const std::string& InPropertyName)
 	{
-		PropertyInitializer.set("PropertyName", InPropertyName);
-		return PropertyInitializer;
+		PropertyInitializer_.set("PropertyName", InPropertyName);
+		return PropertyInitializer_;
 	}
 
 	void PropertyEnd()
 	{
-		PropertyInitializerList.push_back(PropertyInitializer);
-		PropertyInitializer = kainjow::mustache::data();
+		PropertyInitializerList_.push_back(PropertyInitializer_);
+		PropertyInitializer_ = kainjow::mustache::data();
 	}
 
 	kainjow::mustache::data& FunctionBegin(const std::string& InFunctionName)
 	{
-		FunctionInitializer.set("FunctionName", InFunctionName);
-		return FunctionInitializer;
+		FunctionInitializer_.set("FunctionName", InFunctionName);
+		return FunctionInitializer_;
 	}
 
 	void FunctionEnd()
 	{
-		FunctionInitializerList.push_back(FunctionInitializer);
-		FunctionInitializer = kainjow::mustache::data();
+		FunctionInitializerList_.push_back(FunctionInitializer_);
+		FunctionInitializer_ = kainjow::mustache::data();
 	}
 
 	std::string GenerateGeneratedFile()
 	{
-		SourceData.set("ClassStaticInitializerList", ClassStaticInitializerList);
-		return SourceTmpl.render(SourceData);
+		SourceData_.set("ClassStaticInitializerList", ClassStaticInitializerList_);
+		SourceData_.set("IncludeFileList", IncludeFileList_);
+		return SourceTmpl_.render(SourceData_);
 	}
 
-	kainjow::mustache::mustache HeaderTmpl;
-	kainjow::mustache::mustache SourceTmpl;
+	kainjow::mustache::mustache HeaderTmpl_;
+	kainjow::mustache::mustache SourceTmpl_;
 
-	kainjow::mustache::data ClassStaticInitializer;
-	kainjow::mustache::data ClassStaticInitializerList{ kainjow::mustache::data::type::list };
+	kainjow::mustache::data ClassStaticInitializer_;
+	kainjow::mustache::data ClassStaticInitializerList_{ kainjow::mustache::data::type::list };
 
-	kainjow::mustache::data PropertyInitializer;
-	kainjow::mustache::data PropertyInitializerList{ kainjow::mustache::data::type::list };
+	kainjow::mustache::data PropertyInitializer_;
+	kainjow::mustache::data PropertyInitializerList_{ kainjow::mustache::data::type::list };
+	kainjow::mustache::data PropertyInitializerFunctionList_{ kainjow::mustache::data::type::list };
 
-	kainjow::mustache::data FunctionInitializer;
-	kainjow::mustache::data FunctionInitializerList{ kainjow::mustache::data::type::list };
+	kainjow::mustache::data IncludeFileList_{ kainjow::mustache::data::type::list };
 
-	kainjow::mustache::data HeaderData;
-	kainjow::mustache::data SourceData;
+	kainjow::mustache::data FunctionInitializer_;
+	kainjow::mustache::data FunctionInitializerList_{ kainjow::mustache::data::type::list };
 
-	std::stack<std::function<void()>> ContainerEntityExitCallbackStack;
+	kainjow::mustache::data HeaderData_;
+	kainjow::mustache::data SourceData_;
+	std::vector<std::string> PropertyInitializerFunctions_;
+	std::stack<std::function<void()>> ContainerEntityExitCallbackStack_;
 private:
-
-	std::stack<CMetadata*> MetadataStack;
 	std::stack<kainjow::mustache::data> MustacheDataStack;
 
 };

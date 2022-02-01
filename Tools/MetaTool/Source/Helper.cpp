@@ -1,6 +1,7 @@
 #include "Helper.h"
 #include <memory>
 #include <fstream>
+#include "Property.h"
 
 #define CONST_STRING(A, B) static std::string A = #B
 
@@ -60,9 +61,94 @@ const std::string& ToString(cppast::cpp_builtin_type_kind BuiltinTypeKind)
 	TO_STRING(cpp_char32);
 	TO_STRING(cpp_nullptr);
 	default:
-		return "";
+		return CStaticString::Empty;
 	}
 #undef TO_STRING
+}
+
+#define CONST_STRING(A) static std::string A##String = #A
+CONST_STRING(CVoidProperty);
+CONST_STRING(CBoolProperty);
+CONST_STRING(CUInt8Property);
+CONST_STRING(CUInt16Property);
+CONST_STRING(CUInt32Property);
+CONST_STRING(CUInt64Property);
+CONST_STRING(CSInt8Property);
+CONST_STRING(CSInt16Property);
+CONST_STRING(CSInt32Property);
+CONST_STRING(CSInt64Property);
+CONST_STRING(CFloatProperty);
+CONST_STRING(CDoubleProperty);
+CONST_STRING(CStringProperty);
+CONST_STRING(CClassProperty);
+CONST_STRING(CEnumProperty);
+CONST_STRING(CVectorProperty);
+CONST_STRING(CMapProperty);
+CONST_STRING(CUnorderedMapProperty);
+CONST_STRING(CUnknowProperty);
+#undef CONST_STRING
+
+const std::string& ToPropertyTypeName(uint64_t PropertyFlag)
+{
+#define TO_STRING(X) case cppast::##X: return X
+
+	switch (PropertyFlag & EPF_TypeFlagBits)
+	{
+	case EPF_ZeroFlag         : return CUnknowPropertyString;
+	case EPF_VoidFlag         : return CVoidPropertyString; 
+	case EPF_BoolFlag         : return CBoolPropertyString;
+	case EPF_SInt8Flag        : return CSInt8PropertyString;
+	case EPF_SInt16Flag       : return CSInt16PropertyString;
+	case EPF_SInt32Flag       : return CSInt32PropertyString;
+	case EPF_SInt64Flag       : return CSInt64PropertyString;
+	case EPF_UInt8Flag        : return CUInt8PropertyString;
+	case EPF_UInt16Flag       : return CUInt16PropertyString;
+	case EPF_UInt32Flag       : return CUInt32PropertyString;
+	case EPF_UInt64Flag       : return CUInt64PropertyString;
+	case EPF_FloatFlag        : return CFloatPropertyString;
+	case EPF_DoubleFlag       : return CDoublePropertyString;
+	case EPF_StringFlag       : return CStringPropertyString;
+	case EPF_ClassFlag        : return CClassPropertyString;
+	case EPF_EnumFlag	      : return CEnumPropertyString;
+	case EPF_VectorFlag       : return CVectorPropertyString;
+	case EPF_MapFlag          : return CMapPropertyString;
+	case EPF_UnorderedMapFlag : return CUnorderedMapPropertyString;
+	default:
+		break;
+	}
+	return CUnknowPropertyString;
+}
+
+uint64_t MakeBuiltinTypeFlags(cppast::cpp_builtin_type_kind BuiltinTypeKind)
+{
+	switch (BuiltinTypeKind)
+	{
+	case cppast::cpp_builtin_type_kind::cpp_void:       return EPF_VoidFlag;
+	case cppast::cpp_builtin_type_kind::cpp_bool:       return EPF_BoolFlag;
+	case cppast::cpp_builtin_type_kind::cpp_uchar:      return EPF_SInt8Flag;
+	case cppast::cpp_builtin_type_kind::cpp_ushort:     return EPF_SInt16Flag;
+	case cppast::cpp_builtin_type_kind::cpp_uint:       return EPF_SInt32Flag;
+	case cppast::cpp_builtin_type_kind::cpp_ulong:      return sizeof(unsigned long) == 4 ? EPF_UInt32Flag : EPF_UInt64Flag;
+	case cppast::cpp_builtin_type_kind::cpp_ulonglong:  return EPF_SInt64Flag;
+	case cppast::cpp_builtin_type_kind::cpp_uint128:    return 0;
+	case cppast::cpp_builtin_type_kind::cpp_schar:      return EPF_UInt8Flag;
+	case cppast::cpp_builtin_type_kind::cpp_short:      return EPF_UInt16Flag;
+	case cppast::cpp_builtin_type_kind::cpp_int:        return EPF_UInt32Flag;
+	case cppast::cpp_builtin_type_kind::cpp_long:       return sizeof(long) == 4 ? EPF_SInt32Flag : EPF_SInt64Flag;
+	case cppast::cpp_builtin_type_kind::cpp_longlong:   return EPF_UInt64Flag;
+	case cppast::cpp_builtin_type_kind::cpp_int128:     return 0;
+	case cppast::cpp_builtin_type_kind::cpp_float:      return EPF_FloatFlag;
+	case cppast::cpp_builtin_type_kind::cpp_double:     return EPF_DoubleFlag;
+	case cppast::cpp_builtin_type_kind::cpp_longdouble: return 0;
+	case cppast::cpp_builtin_type_kind::cpp_float128:   return 0;
+	case cppast::cpp_builtin_type_kind::cpp_char:       return EPF_SInt8Flag;
+	case cppast::cpp_builtin_type_kind::cpp_wchar:      return 0;
+	case cppast::cpp_builtin_type_kind::cpp_char16:     return 0;
+	case cppast::cpp_builtin_type_kind::cpp_char32:     return 0;
+	case cppast::cpp_builtin_type_kind::cpp_nullptr:    return 0;
+	default:
+		return 0;
+	}
 }
 
 //CType* Convert(const cppast::cpp_type& InCppType)
@@ -98,3 +184,18 @@ std::string LoadStringFromFile(const std::string& InFile)
 	IfStream.close();
 	return Output;
 }
+
+std::string GetOuputHeaderFileFullPath(std::string InputFileFullPath)
+{
+	size_t Pos = InputFileFullPath.rfind(".");
+	if (Pos == std::string::npos) return "";
+	return InputFileFullPath.substr(0, Pos) + "generated.h";
+}
+
+std::string GetOuputSourceFileFullPath(std::string InputFileFullPath)
+{
+	size_t Pos = InputFileFullPath.rfind(".");
+	if (Pos == std::string::npos) return "";
+	return InputFileFullPath.substr(0, Pos) + ".generated.cpp";
+}
+
