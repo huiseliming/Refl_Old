@@ -33,8 +33,8 @@ public:
     CMetadata(const std::string& Name)
         : Name_(Name)
     {
-        Metadatas.push_back(this);
-        Id_ = IdCounter++;
+        //Metadatas.push_back(this);
+        //Id_ = IdCounter++;
     }
     virtual ~CMetadata() = default;
 

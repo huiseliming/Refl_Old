@@ -19,6 +19,8 @@ public:
         Properties.push_back(Property);
     }
 
+    std::vector<CProperty*>& GetProperties() { return Properties; }
+
 private:
     std::vector<CType*> Bases;
     //std::vector<CConstructor*> Constructors;

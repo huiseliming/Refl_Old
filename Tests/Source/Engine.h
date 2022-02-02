@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MetadataApi.h"
+#include "Engine.generated.h" 
 
 class CLASS() CTimerManager
 {
@@ -9,16 +10,14 @@ public:
 
 };
 
-//class CLASS() CEngine
-//{
-//
-//	
-//
-//
-//	CTimerManager TimerManager;
-//};
+class CLASS() CEngine
+{
+	GENERATED_BODY()
+public:
+	CTimerManager TimerManager;
+};
 
-class CEngine;
+//class CEngine;
 
 class CLASS("dsd", 1) CTestMetadataClass
 {

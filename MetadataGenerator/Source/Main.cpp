@@ -519,7 +519,6 @@ int main(int argc, char** argv) try
         kainjow::mustache::mustache HeaderTmpl(GeneratedTemplates::HeaderTemplate);
         kainjow::mustache::data HeaderTmplData;
         kainjow::mustache::data IncludeFileList(kainjow::mustache::data::type::list);
-        IncludeFileList.push_back(InputFileFullPath);
         HeaderTmplData.set("IncludeFileList", IncludeFileList);
         std::string GeneratedHeader = HeaderTmpl.render(HeaderTmplData);
         OuputHeaderFileStream.write(GeneratedHeader.data(), GeneratedHeader.size());
@@ -532,7 +531,7 @@ int main(int argc, char** argv) try
         {
             throw std::runtime_error(OuputSourceFileFullPath + "cant open for  std::ios::out | std::ios::trunc");
         }
-        CCodeGenerator::Instance().IncludeFileList_.push_back(OuputHeaderFileFullPath);
+        CCodeGenerator::Instance().IncludeFileList_.push_back(InputFileFullPath);
         std::string GeneratedSource = CCodeGenerator::Instance().GenerateGeneratedFile();
         OuputSourceFileStream.write(GeneratedSource.data(), GeneratedSource.size());
 

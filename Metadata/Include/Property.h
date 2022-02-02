@@ -52,7 +52,6 @@ public:
         , Flag_(0)
         , AddressOffset_(0)
     {
-        offsetof(CProperty, AddressOffset_);
     }
     uint32_t GetAddressOffset() { return AddressOffset_; }
     void SetAddressOffset(uint32_t AddressOffset) { AddressOffset_ = AddressOffset; }
