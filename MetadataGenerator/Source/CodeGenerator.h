@@ -7,10 +7,9 @@
 class CCodeGenerator
 {
 protected:
+public:
 	CCodeGenerator();
 	~CCodeGenerator();
-public:
-	static CCodeGenerator& Instance();
 
 	void GetHeaderIncludeFilesData();
 

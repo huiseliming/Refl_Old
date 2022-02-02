@@ -14,3 +14,4 @@ std::string LoadStringFromFile(const std::string& InFile);
 std::string GetOuputHeaderFileFullPath(std::string InputFileFullPath);
 std::string GetOuputSourceFileFullPath(std::string InputFileFullPath);
 
+//GetLastWriteTime

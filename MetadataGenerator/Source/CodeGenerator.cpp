@@ -11,9 +11,3 @@ CCodeGenerator::~CCodeGenerator()
 {
 }
 
-CCodeGenerator& CCodeGenerator::Instance()
-{
-	static CCodeGenerator CodeGenerator;
-	return CodeGenerator;
-}
-

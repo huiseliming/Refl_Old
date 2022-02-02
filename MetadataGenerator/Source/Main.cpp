@@ -32,7 +32,6 @@ void PrintEntity(std::ostream& out, const cppast::cpp_entity& e)
 
     }
 
-
     // print name and the kind of the entity
     if (!e.name().empty())
         out << e.name();
@@ -127,15 +126,14 @@ void PrintEntity(std::ostream& out, const cppast::cpp_entity& e)
     }
 }
 
-
 // prints the AST of a file
-void PrintAst(const cppast::cpp_entity_index& idx, std::ostream& out, const cppast::cpp_file& file)
+void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& EntityIndex, std::ostream& OutStream, const cppast::cpp_file& CppFile)
 {
     // print file name
-    out << "AST for '" << file.name() << "':\n";
+    OutStream << "AST for '" << CppFile.name() << "':\n";
     std::string prefix; // the current prefix string
     // recursively visit file and all children
-    cppast::visit(file, [&](const cppast::cpp_entity& e, cppast::visitor_info info) {
+    cppast::visit(CppFile, [&](const cppast::cpp_entity& e, cppast::visitor_info info) {
         if (e.kind() == cppast::cpp_entity_kind::file_t || cppast::is_templated(e) || cppast::is_friended(e))
         {
             // no need to do anything for a file,
@@ -149,27 +147,27 @@ void PrintAst(const cppast::cpp_entity_index& idx, std::ostream& out, const cppa
             // remove prefix
             prefix.pop_back();
             prefix.pop_back();
-            if(CCodeGenerator::Instance().ContainerEntityExitCallbackStack_.top())
-                CCodeGenerator::Instance().ContainerEntityExitCallbackStack_.top()();
-            CCodeGenerator::Instance().ContainerEntityExitCallbackStack_.pop();
+            if(CodeGenerator.ContainerEntityExitCallbackStack_.top())
+                CodeGenerator.ContainerEntityExitCallbackStack_.top()();
+            CodeGenerator.ContainerEntityExitCallbackStack_.pop();
         }
         else
         {
-            out << prefix; // print prefix for previous entities
+            OutStream << prefix; // print prefix for previous entities
             // calculate next prefix
             if (info.last_child)
             {
                 if (info.event == cppast::visitor_info::container_entity_enter)
                     prefix += "  ";
-                out << "+-";
+                OutStream << "+-";
             }
             else
             {
                 if (info.event == cppast::visitor_info::container_entity_enter)
                     prefix += "| ";
-                out << "|-";
+                OutStream << "|-";
             }
-            PrintEntity(out, e);
+            PrintEntity(OutStream, e);
 
             std::function<void()> ContainerEntityExitCallback;
             std::function<void()> Hanle;
@@ -193,21 +191,20 @@ void PrintAst(const cppast::cpp_entity_index& idx, std::ostream& out, const cppa
             }
             if (bIsRequiredMetadata)
             {
-                CCodeGenerator& CodeGenerator = CCodeGenerator::Instance();
                 if (e.kind() == cppast::cpp_entity_kind::class_t)
                 {
                     auto& CppClass = static_cast<const cppast::cpp_class&>(e);
-                    CCodeGenerator::Instance().ClassBegin(CppClass.name());
-                    ContainerEntityExitCallback = []{ CCodeGenerator::Instance().ClassEnd(); };
+                    CodeGenerator.ClassBegin(CppClass.name());
+                    ContainerEntityExitCallback = [&]{ CodeGenerator.ClassEnd(); };
                     //CType* Type = CodeGenerator.RequiredMetadata<CType>(e.name());
                     //CodeGenerator.PushMetadata(StaticClass<CType>());
                 }
                 else if (e.kind() == cppast::cpp_entity_kind::member_variable_t)
                 {
-                    std::string ClassName = CCodeGenerator::Instance().ClassStaticInitializer_.get("ClassName")->string_value();
+                    std::string ClassName = CodeGenerator.ClassStaticInitializer_.get("ClassName")->string_value();
                     CPropertyInfo PropertyInfo = {};
                     auto& CppMemberVariable = static_cast<const cppast::cpp_member_variable&>(e);
-                    auto& PropertyData = CCodeGenerator::Instance().PropertyBegin(CppMemberVariable.name());
+                    auto& PropertyData = CodeGenerator.PropertyBegin(CppMemberVariable.name());
                     auto& CppMemberVariableType = CppMemberVariable.type();
                     const cppast::cpp_type* TypePtr = &CppMemberVariableType;
                     if (TypePtr->kind() == cppast::cpp_type_kind::template_instantiation_t)
@@ -221,7 +218,7 @@ void PrintAst(const cppast::cpp_entity_index& idx, std::ostream& out, const cppa
                                 auto size = TemplateArgment.value().size();
                                 //CCodeGenerator::Instance().PropertyInitializer_.set("PropertyTypeClass", "CVectorProperty");
                                 auto& CppMemberVariableVectorType = CppMemberVariableTemplateInstantiationType.arguments().value().begin()->type().value();
-                                CPropertyInfo VectorElementPropertyInfo = ParseCppTypeToPropertyInfo(idx, CppMemberVariableVectorType);
+                                CPropertyInfo VectorElementPropertyInfo = ParseCppTypeToPropertyInfo(EntityIndex, CppMemberVariableVectorType);
                                 kainjow::mustache::mustache VectorElementPropertyInitializerFunctionTmpl(GeneratedTemplates::PropertyInitializerFunctionTemplate);
                                 kainjow::mustache::data VectorElementPropertyInitializerFunctionData;
                                 VectorElementPropertyInitializerFunctionData.set("ClassName", ClassName);
@@ -238,7 +235,7 @@ void PrintAst(const cppast::cpp_entity_index& idx, std::ostream& out, const cppa
                                         "    });\n"
                                     );
                                 }
-                                CCodeGenerator::Instance().PropertyInitializerFunctionList_.push_back(VectorElementPropertyInitializerFunctionTmpl.render(VectorElementPropertyInitializerFunctionData));
+                                CodeGenerator.PropertyInitializerFunctionList_.push_back(VectorElementPropertyInitializerFunctionTmpl.render(VectorElementPropertyInitializerFunctionData));
                                 PropertyInfo.PropertyFlag |= EPF_VectorFlag;
                             }
                         }
@@ -247,7 +244,7 @@ void PrintAst(const cppast::cpp_entity_index& idx, std::ostream& out, const cppa
                     }
                     else
                     {
-                        PropertyInfo = ParseCppTypeToPropertyInfo(idx, CppMemberVariableType);
+                        PropertyInfo = ParseCppTypeToPropertyInfo(EntityIndex, CppMemberVariableType);
                     }
                     if (!(PropertyInfo.PropertyFlag & EPF_TypeFlagBits))
                     {
@@ -275,21 +272,21 @@ void PrintAst(const cppast::cpp_entity_index& idx, std::ostream& out, const cppa
                             "    Prop.SetDataProperty(CLS_" + ClassName + "__PROP_" + CppMemberVariable.name() + "__VectorElement__STATIC_INITIALIZER());\n"
                         );
                     }
-                    CCodeGenerator::Instance().PropertyInitializerFunctionList_.push_back(PropertyInitializerFunctionTmpl.render(PropertyInitializerFunctionData));
-                    CCodeGenerator::Instance().PropertyInitializer_.set("ClassName", ClassName);
-                    CCodeGenerator::Instance().PropertyInitializer_.set("PropertyName", CppMemberVariable.name());
-                    CCodeGenerator::Instance().PropertyEnd();
+                    CodeGenerator.PropertyInitializerFunctionList_.push_back(PropertyInitializerFunctionTmpl.render(PropertyInitializerFunctionData));
+                    CodeGenerator.PropertyInitializer_.set("ClassName", ClassName);
+                    CodeGenerator.PropertyInitializer_.set("PropertyName", CppMemberVariable.name());
+                    CodeGenerator.PropertyEnd();
                 }
                 else if (e.kind() == cppast::cpp_entity_kind::member_function_t)
                 {
                     auto& CppMemberFunction = static_cast<const cppast::cpp_member_function&>(e);
-                    CCodeGenerator::Instance().FunctionBegin(CppMemberFunction.name());
-                    ContainerEntityExitCallback = [] { CCodeGenerator::Instance().FunctionEnd(); };
+                    CodeGenerator.FunctionBegin(CppMemberFunction.name());
+                    ContainerEntityExitCallback = [&] { CodeGenerator.FunctionEnd(); };
                 }
             }
             if (info.event == cppast::visitor_info::container_entity_enter)
             {
-                CCodeGenerator::Instance().ContainerEntityExitCallbackStack_.push(ContainerEntityExitCallback);
+                CodeGenerator.ContainerEntityExitCallbackStack_.push(ContainerEntityExitCallback);
             }
         }
 
@@ -298,44 +295,44 @@ void PrintAst(const cppast::cpp_entity_index& idx, std::ostream& out, const cppa
 }
 
 
-// parse a file
-type_safe::optional_ref<const cppast::cpp_file> ParseFile(const cppast::cpp_entity_index& idx, const cppast::libclang_compile_config& config,
-    const cppast::diagnostic_logger& logger,
-    const std::string& filename, bool fatal_error)
-{
-    // the entity index is used to resolve cross references in the AST
-    // we don't need that, so it will not be needed afterwards
-    //cppast::cpp_entity_index idx;
-    // the parser is used to parse the entity
-    // there can be multiple parser implementations
-
-    cppast::simple_file_parser<cppast::libclang_parser> parser(type_safe::ref(idx), type_safe::ref(logger));
-    //cppast::libclang_parser parser(type_safe::ref(logger));
-    // parse the file
-    auto file = parser.parse(filename, config);
-    if (fatal_error && parser.error())
-        return nullptr;
-    cppast::resolve_includes(parser, file.value(), config);
-    return file;
-}
-
-template <class FileParser>
-std::size_t resolve_includes2(FileParser& parser, const cppast::cpp_file& file,
-    typename FileParser::config config)
-{
-    auto count = 0u;
-    for (auto& entity : file)
-    {
-        if (entity.kind() == cppast::cpp_include_directive::kind())
-        {
-            auto& include = static_cast<const cppast::cpp_include_directive&>(entity);
-            auto file_opt = parser.parse(include.full_path(), config);
-            resolve_includes(parser, file_opt.value(), config);
-            ++count;
-        }
-    }
-    return count;
-}
+//// parse a file
+//type_safe::optional_ref<const cppast::cpp_file> ParseFile(const cppast::cpp_entity_index& idx, const cppast::libclang_compile_config& config,
+//    const cppast::diagnostic_logger& logger,
+//    const std::string& filename, bool fatal_error)
+//{
+//    // the entity index is used to resolve cross references in the AST
+//    // we don't need that, so it will not be needed afterwards
+//    //cppast::cpp_entity_index idx;
+//    // the parser is used to parse the entity
+//    // there can be multiple parser implementations
+//
+//    cppast::simple_file_parser<cppast::libclang_parser> parser(type_safe::ref(idx), type_safe::ref(logger));
+//    //cppast::libclang_parser parser(type_safe::ref(logger));
+//    // parse the file
+//    auto file = parser.parse(filename, config);
+//    if (fatal_error && parser.error())
+//        return nullptr;
+//    cppast::resolve_includes(parser, file.value(), config);
+//    return file;
+//}
+//
+//template <class FileParser>
+//std::size_t resolve_includes2(FileParser& parser, const cppast::cpp_file& file,
+//    typename FileParser::config config)
+//{
+//    auto count = 0u;
+//    for (auto& entity : file)
+//    {
+//        if (entity.kind() == cppast::cpp_include_directive::kind())
+//        {
+//            auto& include = static_cast<const cppast::cpp_include_directive&>(entity);
+//            auto file_opt = parser.parse(include.full_path(), config);
+//            resolve_includes(parser, file_opt.value(), config);
+//            ++count;
+//        }
+//    }
+//    return count;
+//}
 
 int main(int argc, char** argv) try
 {
@@ -349,7 +346,7 @@ int main(int argc, char** argv) try
             "--std", "c++20",
             "--macro_definition", "__METADATA__",
             "../../Tests/Source/Engine.h",
-            "../../Tests/Source/Engine.cpp",
+            "../../Tests/Source/TimerManager.h",
         };
         CommandLines[0] = argv[0];
         ArgC = CommandLines.size();
@@ -360,7 +357,6 @@ int main(int argc, char** argv) try
         ArgC = argc;
         ArgV = argv;
     }
-    CCodeGenerator& CodeGenerator = CCodeGenerator::Instance();
     cxxopts::Options option_list("MetaTool",
         "MetaTool for CppEngine!\n");
     // clang-format off
@@ -370,7 +366,7 @@ int main(int argc, char** argv) try
         ("v,verbose", "be verbose when parsing")
         ("fatal_errors", "abort program when a parser error occurs, instead of doing error correction")
         ("file", "the file that is being parsed (last positional argument)",
-            cxxopts::value<std::string>());
+            cxxopts::value<std::vector<std::string>>());
     option_list.add_options("compilation")
         ("database_dir", "set the directory where a 'compile_commands.json' file is located containing build information",
             cxxopts::value<std::string>())
@@ -398,153 +394,175 @@ int main(int argc, char** argv) try
         std::cout << option_list.help({ "", "compilation" }) << '\n';
     else if (options.count("version"))
     {
-        std::cout << "MetaTools version ?.?.?\n";
+        std::cout << "MetadataGenerator version ?.?.?\n";
         std::cout << "Using cppast version " << CPPAST_VERSION_STRING << '\n';
         std::cout << "Using libclang version " << CPPAST_CLANG_VERSION_STRING << '\n';
     }
-    else if (!options.count("file") || options["file"].as<std::string>().empty())
+    else if (!options.count("file") || options["file"].as<std::vector<std::string>>().empty())
     {
         std::cerr << "missing file argument\n";
         return 1;
     }
     else
     {
-        // the compile config stores compilation flags
-        cppast::libclang_compile_config config;
-        if (options.count("database_dir"))
+        std::vector<std::string> InputFiles = options["file"].as<std::vector<std::string>>();
+        std::vector<CCodeGenerator> CodeGenerators;
+        CodeGenerators.resize(InputFiles.size());
+        for (size_t i = 0; i < InputFiles.size(); i++)
         {
-            cppast::libclang_compilation_database database(
-                options["database_dir"].as<std::string>());
-            if (options.count("database_file"))
-                config
-                = cppast::libclang_compile_config(database,
-                    options["database_file"].as<std::string>());
-            else
-                config
-                = cppast::libclang_compile_config(database, options["file"].as<std::string>());
-        }
-
-        if (options.count("verbose"))
-            config.write_preprocessed(true);
-
-        if (options.count("fast_preprocessing"))
-            config.fast_preprocessing(true);
-
-        if (options.count("remove_comments_in_macro"))
-            config.remove_comments_in_macro(true);
-
-        if (options.count("include_directory"))
-            for (auto& include : options["include_directory"].as<std::vector<std::string>>())
-                config.add_include_dir(include);
-        if (options.count("macro_definition"))
-            for (auto& macro : options["macro_definition"].as<std::vector<std::string>>())
+            CCodeGenerator& CodeGenerator = CodeGenerators[i];
+            std::string InputFile = InputFiles[i];
+            std::string InputFileFullPath = std::filesystem::weakly_canonical(InputFile).string();
+            std::string OuputHeaderFileFullPath = GetOuputHeaderFileFullPath(InputFileFullPath);
+            if (std::filesystem::exists(OuputHeaderFileFullPath))
             {
-                auto equal = macro.find('=');
-                auto name = macro.substr(0, equal);
-                if (equal == std::string::npos)
-                    config.define_macro(std::move(name), "");
-                else
+                std::filesystem::file_time_type OuputFileLastWriteTime = std::filesystem::last_write_time(OuputHeaderFileFullPath);
+                std::filesystem::file_time_type InputFileLastWriteTime = std::filesystem::last_write_time(InputFileFullPath);
+                if (OuputFileLastWriteTime == InputFileLastWriteTime)
                 {
-                    auto def = macro.substr(equal + 1u);
-                    config.define_macro(std::move(name), std::move(def));
+                    std::cout << "InputFile[" << InputFileFullPath << "] without any modification." << std::endl;
+                    continue;
                 }
             }
-        if (options.count("macro_undefinition"))
-            for (auto& name : options["macro_undefinition"].as<std::vector<std::string>>())
-                config.undefine_macro(name);
-        if (options.count("feature"))
-            for (auto& name : options["feature"].as<std::vector<std::string>>())
-                config.enable_feature(name);
+            // the compile config stores compilation flags
+            cppast::libclang_compile_config config;
+            if (options.count("database_dir"))
+            {
+                cppast::libclang_compilation_database database(
+                    options["database_dir"].as<std::string>());
+                if (options.count("database_file"))
+                    config
+                    = cppast::libclang_compile_config(database,
+                        options["database_file"].as<std::string>());
+                else
+                    config
+                    = cppast::libclang_compile_config(database, InputFile);
+            }
 
-        // the compile_flags are generic flags
-        cppast::compile_flags flags;
-        if (options.count("gnu_extensions"))
-            flags |= cppast::compile_flag::gnu_extensions;
-        if (options.count("msvc_extensions"))
-            flags |= cppast::compile_flag::ms_extensions;
-        if (options.count("msvc_compatibility"))
-            flags |= cppast::compile_flag::ms_compatibility;
+            if (options.count("verbose"))
+                config.write_preprocessed(true);
 
-        if (options["std"].as<std::string>() == "c++98")
-            config.set_flags(cppast::cpp_standard::cpp_98, flags);
-        else if (options["std"].as<std::string>() == "c++03")
-            config.set_flags(cppast::cpp_standard::cpp_03, flags);
-        else if (options["std"].as<std::string>() == "c++11")
-            config.set_flags(cppast::cpp_standard::cpp_11, flags);
-        else if (options["std"].as<std::string>() == "c++14")
-            config.set_flags(cppast::cpp_standard::cpp_14, flags);
-        else if (options["std"].as<std::string>() == "c++1z")
-            config.set_flags(cppast::cpp_standard::cpp_1z, flags);
-        else if (options["std"].as<std::string>() == "c++17")
-            config.set_flags(cppast::cpp_standard::cpp_17, flags);
-        else if (options["std"].as<std::string>() == "c++2a")
-            config.set_flags(cppast::cpp_standard::cpp_2a, flags);
-        else if (options["std"].as<std::string>() == "c++20")
-            config.set_flags(cppast::cpp_standard::cpp_20, flags);
-        else
-        {
-            std::cerr << "invalid value '" << options["std"].as<std::string>() << "' for std flag\n";
-            return 1;
+            if (options.count("fast_preprocessing"))
+                config.fast_preprocessing(true);
+
+            if (options.count("remove_comments_in_macro"))
+                config.remove_comments_in_macro(true);
+
+            if (options.count("include_directory"))
+                for (auto& include : options["include_directory"].as<std::vector<std::string>>())
+                    config.add_include_dir(include);
+            if (options.count("macro_definition"))
+                for (auto& macro : options["macro_definition"].as<std::vector<std::string>>())
+                {
+                    auto equal = macro.find('=');
+                    auto name = macro.substr(0, equal);
+                    if (equal == std::string::npos)
+                        config.define_macro(std::move(name), "");
+                    else
+                    {
+                        auto def = macro.substr(equal + 1u);
+                        config.define_macro(std::move(name), std::move(def));
+                    }
+                }
+            if (options.count("macro_undefinition"))
+                for (auto& name : options["macro_undefinition"].as<std::vector<std::string>>())
+                    config.undefine_macro(name);
+            if (options.count("feature"))
+                for (auto& name : options["feature"].as<std::vector<std::string>>())
+                    config.enable_feature(name);
+
+            // the compile_flags are generic flags
+            cppast::compile_flags flags;
+            if (options.count("gnu_extensions"))
+                flags |= cppast::compile_flag::gnu_extensions;
+            if (options.count("msvc_extensions"))
+                flags |= cppast::compile_flag::ms_extensions;
+            if (options.count("msvc_compatibility"))
+                flags |= cppast::compile_flag::ms_compatibility;
+
+            if (options["std"].as<std::string>() == "c++98")
+                config.set_flags(cppast::cpp_standard::cpp_98, flags);
+            else if (options["std"].as<std::string>() == "c++03")
+                config.set_flags(cppast::cpp_standard::cpp_03, flags);
+            else if (options["std"].as<std::string>() == "c++11")
+                config.set_flags(cppast::cpp_standard::cpp_11, flags);
+            else if (options["std"].as<std::string>() == "c++14")
+                config.set_flags(cppast::cpp_standard::cpp_14, flags);
+            else if (options["std"].as<std::string>() == "c++1z")
+                config.set_flags(cppast::cpp_standard::cpp_1z, flags);
+            else if (options["std"].as<std::string>() == "c++17")
+                config.set_flags(cppast::cpp_standard::cpp_17, flags);
+            else if (options["std"].as<std::string>() == "c++2a")
+                config.set_flags(cppast::cpp_standard::cpp_2a, flags);
+            else if (options["std"].as<std::string>() == "c++20")
+                config.set_flags(cppast::cpp_standard::cpp_20, flags);
+            else
+            {
+                std::cerr << "invalid value '" << options["std"].as<std::string>() << "' for std flag\n";
+                return 1;
+            }
+
+            // the logger is used to print diagnostics
+            cppast::stderr_diagnostic_logger logger;
+            // the entity index is used to resolve cross references in the AST
+            // we don't need that, so it will not be needed afterwards
+            cppast::cpp_entity_index EntityIndex;
+            // the parser is used to parse the entity
+            // there can be multiple parser implementations
+            cppast::libclang_parser Parser(type_safe::ref(logger));
+            // parse the file
+            auto CppFile = Parser.parse(EntityIndex, InputFile, config);
+            if (Parser.error())
+                return 2;
+            else
+            {
+                PrintAst(CodeGenerator, EntityIndex, std::cout, *CppFile);
+            }
+
+            // header 
+            std::fstream OuputHeaderFileStream;
+            OuputHeaderFileStream.open(OuputHeaderFileFullPath, std::ios::out | std::ios::trunc);
+            if (!OuputHeaderFileStream.is_open())
+            {
+                throw std::runtime_error(OuputHeaderFileFullPath + "cant open for  std::ios::out | std::ios::trunc");
+            }
+
+            kainjow::mustache::mustache HeaderTmpl(GeneratedTemplates::HeaderTemplate);
+            kainjow::mustache::data HeaderTmplData;
+            kainjow::mustache::data IncludeFileList(kainjow::mustache::data::type::list);
+            HeaderTmplData.set("IncludeFileList", IncludeFileList);
+            std::string GeneratedHeader = HeaderTmpl.render(HeaderTmplData);
+            OuputHeaderFileStream.write(GeneratedHeader.data(), GeneratedHeader.size());
+            OuputHeaderFileStream.close();
+
+            //source
+            std::string OuputSourceFileFullPath = GetOuputSourceFileFullPath(InputFileFullPath);
+            std::fstream OuputSourceFileStream;
+            OuputSourceFileStream.open(OuputSourceFileFullPath, std::ios::out | std::ios::trunc);
+            if (!OuputSourceFileStream.is_open())
+            {
+                throw std::runtime_error(OuputSourceFileFullPath + "cant open for  std::ios::out | std::ios::trunc");
+            }
+            CodeGenerator.IncludeFileList_.push_back(InputFileFullPath);
+            std::string GeneratedSource = CodeGenerator.GenerateGeneratedFile();
+            OuputSourceFileStream.write(GeneratedSource.data(), GeneratedSource.size());
+            OuputSourceFileStream.close();
+            std::filesystem::last_write_time(OuputHeaderFileFullPath, std::filesystem::last_write_time(InputFileFullPath));
+            //std::filesystem::file_time_type a = std::filesystem::last_write_time(InputFileFullPath);
+            //std::filesystem::file_time_type b = std::filesystem::last_write_time(OuputHeaderFileFullPath);
+            //std::filesystem::last_write_time(OuputHeaderFileFullPath, a);
+            //std::filesystem::file_time_type c = std::filesystem::last_write_time(OuputHeaderFileFullPath);
+            //kainjow::mustache::data HeaderTmplData;
+            //CodeGenerator.HeaderTmpl.render(CodeGenerator.HeaderIncludeFile);
+            //std::string HeaderOutput = CodeGenerator.HeaderTmpl.render(HeaderTmplData);
+            //std::cout << HeaderOutput << std::endl;
+            //kainjow::mustache::data SourceTmplData;
+            //SourceTmplData.list_value().
+            //SourceTmplData.set("IncludeFiles", CodeGenerator.SourceIncludeFile);
+            //SourceTmplData.set("ClassStaticInitializer", CodeGenerator.ClassStaticInitializer);
+            //std::string SourceOutput = CodeGenerator.SourceTmpl.render(SourceTmplData);
+            //std::cout << SourceOutput << std::endl;
         }
-
-        // the logger is used to print diagnostics
-        cppast::stderr_diagnostic_logger logger;
-        if (options.count("verbose"))
-            logger.set_verbose(true);
-        cppast::cpp_entity_index idx;
-        cppast::simple_file_parser<cppast::libclang_parser> parser(type_safe::ref(idx), type_safe::ref(logger));
-        //cppast::libclang_parser parser(type_safe::ref(logger));
-        // parse the file
-        auto file = parser.parse(options["file"].as<std::string>(), config);
-        if (options.count("fatal_errors") == 1 && parser.error())
-            return 3;
-        resolve_includes2(parser, file.value(), config);
-        //auto file = ParseFile(idx, config, logger, options["file"].as<std::string>(),
-        //    options.count("fatal_errors") == 1);
-        //if (!file)
-        //    return 2;
-        PrintAst(idx, std::cout, file.value());
-
-
-        std::string InputFileFullPath = std::filesystem::weakly_canonical(options["file"].as<std::string>()).string();
-        // header 
-        std::string OuputHeaderFileFullPath = GetOuputHeaderFileFullPath(InputFileFullPath);
-        std::fstream OuputHeaderFileStream;
-        OuputHeaderFileStream.open(OuputHeaderFileFullPath, std::ios::out | std::ios::trunc);
-        if (!OuputHeaderFileStream.is_open())
-        {
-            throw std::runtime_error(OuputHeaderFileFullPath + "cant open for  std::ios::out | std::ios::trunc");
-        }
-
-        kainjow::mustache::mustache HeaderTmpl(GeneratedTemplates::HeaderTemplate);
-        kainjow::mustache::data HeaderTmplData;
-        kainjow::mustache::data IncludeFileList(kainjow::mustache::data::type::list);
-        HeaderTmplData.set("IncludeFileList", IncludeFileList);
-        std::string GeneratedHeader = HeaderTmpl.render(HeaderTmplData);
-        OuputHeaderFileStream.write(GeneratedHeader.data(), GeneratedHeader.size());
-
-        //source
-        std::string OuputSourceFileFullPath = GetOuputSourceFileFullPath(InputFileFullPath);
-        std::fstream OuputSourceFileStream;
-        OuputSourceFileStream.open(OuputSourceFileFullPath, std::ios::out | std::ios::trunc);
-        if (!OuputSourceFileStream.is_open())
-        {
-            throw std::runtime_error(OuputSourceFileFullPath + "cant open for  std::ios::out | std::ios::trunc");
-        }
-        CCodeGenerator::Instance().IncludeFileList_.push_back(InputFileFullPath);
-        std::string GeneratedSource = CCodeGenerator::Instance().GenerateGeneratedFile();
-        OuputSourceFileStream.write(GeneratedSource.data(), GeneratedSource.size());
-
-        //kainjow::mustache::data HeaderTmplData;
-        //CodeGenerator.HeaderTmpl.render(CodeGenerator.HeaderIncludeFile);
-        //std::string HeaderOutput = CodeGenerator.HeaderTmpl.render(HeaderTmplData);
-        //std::cout << HeaderOutput << std::endl;
-        //kainjow::mustache::data SourceTmplData;
-        //SourceTmplData.list_value().
-        //SourceTmplData.set("IncludeFiles", CodeGenerator.SourceIncludeFile);
-        //SourceTmplData.set("ClassStaticInitializer", CodeGenerator.ClassStaticInitializer);
-        //std::string SourceOutput = CodeGenerator.SourceTmpl.render(SourceTmplData);
-        //std::cout << SourceOutput << std::endl;
     }
 }
 catch (const cppast::libclang_error& ex)

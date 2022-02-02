@@ -1,14 +1,8 @@
 #pragma once
 
 #include "MetadataApi.h"
+#include "TimerManager.h"
 #include "Engine.generated.h" 
-
-class CLASS() CTimerManager
-{
-	GENERATED_BODY()
-public:
-
-};
 
 class CLASS() CEngine
 {
