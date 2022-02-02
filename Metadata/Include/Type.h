@@ -29,9 +29,9 @@ struct TAutoInitializer
 {
     TAutoInitializer()
     {
-        const CClass* Class = T::StaticClass();
+        CClass* Class = T::StaticClass();
         assert(!CType::StaticTable().contains(Class->GetName()));
-        CType::StaticTable().insert(Class->GetName(), Class);
+        CType::StaticTable().insert(std::make_pair(Class->GetName(), Class));
     }
 };
 

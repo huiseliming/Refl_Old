@@ -2,7 +2,7 @@
 #include <string>
 #include <cassert>
 #include <unordered_map>
-#include "MetadataApi.h"
+#include "MetadataExport.h"
 
 #ifdef __METADATA__
 #define METADATA(...)  __attribute__((annotate("Metadata" __VA_OPT__(",") #__VA_ARGS__)))
@@ -58,7 +58,7 @@ public:
 
     void SetName(const std::string& Name) { Name_ = Name; }
 
-    const std::string& GetName() { return Name_; }
+    const std::string& GetName() const { return Name_; }
 
 protected:
     int64_t Id_{INT64_MAX};

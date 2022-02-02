@@ -1,10 +1,6 @@
 #pragma once
 
-#include "Metadata.h"
-#include "Type.h"
-#include "Class.h"
-#include "StaticType.h"
-#include "Property.h"
+#include "MetadataApi.h"
 
 class CLASS() CTimerManager
 {

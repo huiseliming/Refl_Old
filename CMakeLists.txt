@@ -16,7 +16,7 @@ if(NOT PROJECT_NAME)
         message("VCPKG_TARGET_TRIPLET: " ${VCPKG_TARGET_TRIPLET})
     endif()
 
-    project(CppEngine LANGUAGES CXX C)
+    project(MetadataCpp LANGUAGES CXX C)
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
@@ -42,22 +42,11 @@ if(WIN32)
 endif()
 
 add_subdirectory(ThirdParty)
-add_subdirectory(Tools)
+add_subdirectory(Metadata)
+add_subdirectory(MetadataGenerator)
 add_subdirectory(Tests)
 
 
-
-file(GLOB_RECURSE PublicHeader Include/*.h)
-file(GLOB_RECURSE PrivateHeader Source/*.h)
-file(GLOB_RECURSE PrivateSource Source/*.cpp)
-
-add_library(
-    Engine 
-    ${PublicHeader}
-    ${PrivateHeader}
-    ${PrivateSource}
-    )
-target_link_libraries(Engine PUBLIC Metadata)
 ## add the command that invokes the reflection parser executable
 ## whenever a header file in your project has changed
 #add_custom_command(

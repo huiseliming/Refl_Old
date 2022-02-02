@@ -341,15 +341,15 @@ int main(int argc, char** argv) try
 {
     int ArgC;
     char** ArgV;
-    //std::string currentPath = std::filesystem::current_path().string();
+    std::string currentPath = std::filesystem::current_path().string();
     if (argc == 1) {
         static std::vector<const char*> CommandLines = {
             "",
-            "--database_dir",  "../../",//"../",
+            "--database_dir", "../",
             "--std", "c++20",
             "--macro_definition", "__METADATA__",
-            "../../../Source/Engine.h",
-            "../../../Source/Engine.cpp",
+            "../../Tests/Source/Engine.h",
+            "../../Tests/Source/Engine.cpp",
         };
         CommandLines[0] = argv[0];
         ArgC = CommandLines.size();

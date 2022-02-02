@@ -14,7 +14,7 @@ target_include_directories(Metadata PUBLIC
 include(GenerateExportHeader)
 generate_export_header(Metadata 
     EXPORT_MACRO_NAME METADATA_API
-    EXPORT_FILE_NAME ${CMAKE_CURRENT_SOURCE_DIR}/Include/MetadataApi.h)
+    EXPORT_FILE_NAME ${CMAKE_CURRENT_SOURCE_DIR}/Include/MetadataExport.h)
 if(WIN32)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ${CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS_SAVE})
 endif()
