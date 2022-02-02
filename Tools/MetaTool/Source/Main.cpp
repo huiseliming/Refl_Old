@@ -505,7 +505,26 @@ int main(int argc, char** argv) try
         //    return 2;
         PrintAst(idx, std::cout, file.value());
 
+
         std::string InputFileFullPath = std::filesystem::weakly_canonical(options["file"].as<std::string>()).string();
+        // header 
+        std::string OuputHeaderFileFullPath = GetOuputHeaderFileFullPath(InputFileFullPath);
+        std::fstream OuputHeaderFileStream;
+        OuputHeaderFileStream.open(OuputHeaderFileFullPath, std::ios::out | std::ios::trunc);
+        if (!OuputHeaderFileStream.is_open())
+        {
+            throw std::runtime_error(OuputHeaderFileFullPath + "cant open for  std::ios::out | std::ios::trunc");
+        }
+
+        kainjow::mustache::mustache HeaderTmpl(GeneratedTemplates::HeaderTemplate);
+        kainjow::mustache::data HeaderTmplData;
+        kainjow::mustache::data IncludeFileList(kainjow::mustache::data::type::list);
+        IncludeFileList.push_back(InputFileFullPath);
+        HeaderTmplData.set("IncludeFileList", IncludeFileList);
+        std::string GeneratedHeader = HeaderTmpl.render(HeaderTmplData);
+        OuputHeaderFileStream.write(GeneratedHeader.data(), GeneratedHeader.size());
+
+        //source
         std::string OuputSourceFileFullPath = GetOuputSourceFileFullPath(InputFileFullPath);
         std::fstream OuputSourceFileStream;
         OuputSourceFileStream.open(OuputSourceFileFullPath, std::ios::out | std::ios::trunc);
@@ -513,7 +532,7 @@ int main(int argc, char** argv) try
         {
             throw std::runtime_error(OuputSourceFileFullPath + "cant open for  std::ios::out | std::ios::trunc");
         }
-        CCodeGenerator::Instance().IncludeFileList_.push_back(InputFileFullPath);
+        CCodeGenerator::Instance().IncludeFileList_.push_back(OuputHeaderFileFullPath);
         std::string GeneratedSource = CCodeGenerator::Instance().GenerateGeneratedFile();
         OuputSourceFileStream.write(GeneratedSource.data(), GeneratedSource.size());
 

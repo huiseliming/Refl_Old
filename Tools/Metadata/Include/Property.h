@@ -75,8 +75,8 @@ public:
     virtual int64_t GetSInt(void const* ClassPtr) const { return 0; }
     virtual uint64_t GetUInt(void const* ClassPtr) const { return 0; }
     virtual double GetFloat(void const* ClassPtr) const { return 0.f; }
-    virtual void SetUInt(void* ClassPtr, int64_t Value) const {}
-    virtual void SetSInt(void* ClassPtr, uint64_t Value) const {}
+    virtual void SetUInt(void* ClassPtr, uint64_t Value) const {}
+    virtual void SetSInt(void* ClassPtr, int64_t Value) const {}
     virtual void SetFloat(void* ClassPtr, double Value) const {}
 
     virtual std::string GetString(void const* ClassPtr) const { return ""; }
@@ -148,8 +148,8 @@ struct TNumericProperty : public CProperty
 //#pragma warning (disable: 4244)
         *TIPropertyAccessor::GetPtr(GetRowPtr(ClassPtr)) = (T)atoll(Value);
 //#pragma warning(pop)
-    }
-    virtual std::string GeNumericToString(void const* ClassPtr) const override
+    }    
+    virtual std::string GetNumericToString(void const* ClassPtr) const override
     {
         return std::to_string(TIPropertyAccessor::Get(GetRowPtr(ClassPtr)));
     }

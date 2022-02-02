@@ -189,7 +189,7 @@ std::string GetOuputHeaderFileFullPath(std::string InputFileFullPath)
 {
 	size_t Pos = InputFileFullPath.rfind(".");
 	if (Pos == std::string::npos) return "";
-	return InputFileFullPath.substr(0, Pos) + "generated.h";
+	return InputFileFullPath.substr(0, Pos) + ".generated.h";
 }
 
 std::string GetOuputSourceFileFullPath(std::string InputFileFullPath)

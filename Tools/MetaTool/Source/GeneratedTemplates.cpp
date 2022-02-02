@@ -6,7 +6,9 @@ const char* HeaderTemplate =
 
 "#pragma once\n"
 "\n"
-"\n"
+"{{#IncludeFileList}}"
+"#include \"{{.}}\"\n"
+"{{/IncludeFileList}}"
 "\n"
 ""
 
