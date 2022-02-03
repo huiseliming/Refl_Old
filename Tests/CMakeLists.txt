@@ -23,6 +23,9 @@ foreach(HeaderFile ${PublicHeader} ${PrivateHeader})
     #message(${HeaderFile})
     #message( ${GeneratedHeaderFileFullName})
     #message( ${GeneratedSourceFileFullName})
+    if(NOT EXISTS ${GeneratedHeaderFileFullName})
+        file(WRITE ${GeneratedHeaderFileFullName}  "#pragma once")
+    endif()
 endforeach()
 
 add_executable(
@@ -40,6 +43,7 @@ message( "--database_dir ${CMAKE_BINARY_DIR} --std c++20 --macro_definition __ME
 add_custom_target(check_tests_generated_file
     ALL
     DEPENDS ${PublicHeader} ${PrivateHeader}
+    BYPRODUCTS ${GeneratedHeader} ${GeneratedSource}
     COMMENT "Checking the generated file for changes..."
     COMMAND
         MetadataGenerator 

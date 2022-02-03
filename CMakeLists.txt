@@ -41,11 +41,14 @@ if(WIN32)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS OFF)
 endif()
 
+option(BuildMetadataCppTests "build MetadataCpp tests" ON)
+
 add_subdirectory(ThirdParty)
 add_subdirectory(Metadata)
 add_subdirectory(MetadataGenerator)
-add_subdirectory(Tests)
-
+if(BuildMetadataCppTests)
+    add_subdirectory(Tests)
+endif()
 
 ## add the command that invokes the reflection parser executable
 ## whenever a header file in your project has changed
