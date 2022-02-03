@@ -7,17 +7,51 @@
 file(GLOB_RECURSE PublicHeader Include/*.h)
 file(GLOB_RECURSE PrivateHeader Source/*.h)
 file(GLOB_RECURSE PrivateSource Source/*.cpp)
+list(FILTER PublicHeader  EXCLUDE REGEX "^.*\\.generated\\.h")
+list(FILTER PrivateHeader EXCLUDE REGEX "^.*\\.generated\\.h")
+list(FILTER PrivateSource EXCLUDE REGEX "^.*\\.generated\\.cpp")
+
+foreach(HeaderFile ${PublicHeader} ${PrivateHeader})
+    string(FIND ${HeaderFile} ".h" HeaderFileDotHPos REVERSE)
+    string(SUBSTRING ${HeaderFile} 0 ${HeaderFileDotHPos} HeaderFileName)
+    set(GeneratedHeaderFileFullName ${HeaderFileName})
+    set(GeneratedSourceFileFullName ${HeaderFileName})
+    string(APPEND GeneratedHeaderFileFullName ".generated.h")
+    string(APPEND GeneratedSourceFileFullName ".generated.cpp")
+    list(APPEND GeneratedHeader ${GeneratedHeaderFileFullName})
+    list(APPEND GeneratedSource ${GeneratedSourceFileFullName})
+    #message(${HeaderFile})
+    #message( ${GeneratedHeaderFileFullName})
+    #message( ${GeneratedSourceFileFullName})
+endforeach()
 
 add_executable(
     Tests 
     ${PublicHeader}
     ${PrivateHeader}
     ${PrivateSource}
+    ${GeneratedHeader}
+    ${GeneratedSource}
     )
+
 target_link_libraries(Tests PUBLIC Metadata)
 
+message( "--database_dir ${CMAKE_BINARY_DIR} --std c++20 --macro_definition __METADATA__ ${PublicHeader} ${PrivateHeader}")
+add_custom_target(check_tests_generated_file
+    ALL
+    DEPENDS ${PublicHeader} ${PrivateHeader}
+    COMMENT "Checking the generated file for changes..."
+    COMMAND
+        MetadataGenerator 
+        --database_dir ${CMAKE_BINARY_DIR} 
+        --std c++20 
+        --macro_definition __METADATA__ 
+        ${PublicHeader} ${PrivateHeader})
 
-# add the command that invokes the reflection parser executable
+add_dependencies(check_tests_generated_file MetadataGenerator)
+add_dependencies(Tests check_tests_generated_file)
+
+# add the command that invokes the reflection parser executablec
 # whenever a header file in your project has changed
 #add_custom_command(
 #    OUTPUT ${META_GENERATED_HEADER} ${META_GENERATED_SOURCE}

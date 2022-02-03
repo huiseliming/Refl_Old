@@ -342,7 +342,7 @@ int main(int argc, char** argv) try
     if (argc == 1) {
         static std::vector<const char*> CommandLines = {
             "",
-            "--database_dir", "../",
+            "--database_dir", "C:/Users/DaiMingze/Desktop/CppEngine/build",
             "--std", "c++20",
             "--macro_definition", "__METADATA__",
             "../../Tests/Source/Engine.h",
