@@ -199,3 +199,62 @@ std::string GetOuputSourceFileFullPath(std::string InputFileFullPath)
 	return InputFileFullPath.substr(0, Pos) + ".generated.cpp";
 }
 
+std::string FormatCustomMetadata(const std::string& CustomMetadata)
+{
+	std::string ReplaceCustomMetadata;
+	bool IsInStringRange = false;
+	bool FoundFirstEqual = false;
+	for (size_t i = 0; i < CustomMetadata.size(); i++)
+	{
+		std::function<void()> SetNotInStringRange;
+		if (CustomMetadata[i] == '\"')
+		{
+			if (IsInStringRange)
+			{
+				if (CustomMetadata[i - 1] != '\\')
+				{
+					SetNotInStringRange = [&] { IsInStringRange = false; };
+				}
+			}
+			else
+			{
+				IsInStringRange = true;
+			}
+		}
+		if (IsInStringRange)
+		{
+			ReplaceCustomMetadata.push_back(CustomMetadata[i]);
+		}
+		else
+		{
+			if (('a' <= CustomMetadata[i] && CustomMetadata[i] <= 'z') ||
+				('A' <= CustomMetadata[i] && CustomMetadata[i] <= 'Z') ||
+				('0' <= CustomMetadata[i] && CustomMetadata[i] <= '9') || 
+				CustomMetadata[i] == '_'
+			)
+			{
+				ReplaceCustomMetadata.push_back(CustomMetadata[i]);
+			}
+			if (CustomMetadata[i] == '=' && !FoundFirstEqual)
+			{
+				ReplaceCustomMetadata.push_back(CustomMetadata[i]);
+				FoundFirstEqual = true;
+			}
+		}
+		if (SetNotInStringRange) SetNotInStringRange();
+	}
+	return ReplaceCustomMetadata;
+}
+
+kainjow::mustache::data MakeTmplMetadataKVList(std::unordered_map<std::string, std::string> MetadataMap)
+{
+	kainjow::mustache::data MetadataKVList{ kainjow::mustache::data::type::list };
+	for (auto Metadata : MetadataMap)
+	{
+		kainjow::mustache::data MetadataKV;
+		MetadataKV.set("Key", Metadata.first);
+		MetadataKV.set("Value", Metadata.second);
+		MetadataKVList.push_back(MetadataKV);
+	}
+	return MetadataKVList;
+}

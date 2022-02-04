@@ -35,6 +35,13 @@ struct TAutoInitializer
     }
 };
 
+template<typename T>
+struct TEnum
+{
+    static CEnum* StaticEnum();
+    static CEnum* ENUM_STATIC_INITIALIZER();
+};
+
 //
 //enum EQualifiedTypeFlagBit : uint32_t
 //{

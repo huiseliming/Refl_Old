@@ -2,7 +2,34 @@
 
 #include "MetadataApi.h"
 #include "TimerManager.h"
-#include "Engine.generated.h" 
+#include "Engine.generated.h"
+
+
+enum ENUM(ClassName = "测试枚举") ETestEnum
+{
+	Test1,
+	Test2,
+	Test3,
+	Test4,
+	Test5,
+};
+
+#ifdef ENUM_ETestEnum_GENERATED_BODY
+	ENUM_ETestEnum_GENERATED_BODY 
+#endif // ENUM_ETestEnum_GENERATED_BODY
+
+enum class ENUM() ETestEnum2 : uint64_t
+{
+	Test21,
+	Test22,
+	Test23,
+	Test24,
+	Test25,
+};
+
+#ifdef ENUM_ETestEnum2_GENERATED_BODY
+	ENUM_ETestEnum2_GENERATED_BODY
+#endif // ENUM_ETestEnum2_GENERATED_BODY
 
 class CLASS() CEngine
 {
@@ -13,7 +40,7 @@ public:
 
 //class CEngine;
 
-class CLASS("dsd", 1) CTestMetadataClass
+class CLASS(ClassName = "测试类") CTestMetadataClass
 {
 	GENERATED_BODY()
 public:
@@ -23,10 +50,10 @@ public:
 	//int32_t TestSInt32Property;
 	//PROPERTY()
 	//int64_t TestSInt64Property;
-	PROPERTY()
+	PROPERTY((ClassName = "测试属性"))
 	const volatile int32_t& TestUInt32Property;
 
-	PROPERTY()
+	PROPERTY(meta = "")
 	const volatile CEngine* TestEnginePtrProperty;
 	//PROPERTY()
 	//int64_t TestUInt64Property;

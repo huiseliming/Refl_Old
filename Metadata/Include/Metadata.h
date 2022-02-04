@@ -26,6 +26,22 @@ static CClass* CLASS_STATIC_INITIALIZER(); \
 static CClass* StaticClass();              \
 static int64_t MetadataId;                 \
 
+//
+//struct CMetadataValue
+//{
+//    enum EType
+//    {
+//        EMVT_Integer,
+//        EMVT_Float,
+//        EMVT_String
+//    };
+//    CMetadataValue(double Value);
+//
+//    EType Type_;
+//    std::string Value_;
+//};
+
+
 class METADATA_API CMetadata
 {
     friend class CMetadataManager;
@@ -50,7 +66,7 @@ public:
         return KeyToValue_.contains(Key);
     }
 
-    void AddData(const std::string& Key, const std::string& Value)
+    void AddMetadata(const std::string& Key, const std::string& Value)
     {
         if (KeyToValue_.contains(Key)) assert(false);
         KeyToValue_.insert_or_assign(Key, Value);

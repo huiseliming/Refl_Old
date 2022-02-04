@@ -12,6 +12,7 @@
 #include <cppast/visitor.hpp>         // for visit()
 #include <cppast/cpp_member_function.hpp>
 #include <cppast/cpp_template.hpp>
+#include <cppast/cpp_enum.hpp>
 #include <fmt/format.h>
 
 #include "StaticType.h"
@@ -172,6 +173,8 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
             std::function<void()> ContainerEntityExitCallback;
             std::function<void()> Hanle;
             bool bIsRequiredMetadata = false;
+            std::unordered_map<std::string, std::string> CustomMetadatas;
+            std::vector<std::string> CustomMetadataStrings;
             if (!e.attributes().empty())
             {
                 for (const cppast::cpp_attribute& attribute : e.attributes())
@@ -184,6 +187,114 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                             if (!AttributeArguments.empty() && AttributeArguments.front().spelling == "\"Metadata\"")
                             {
                                 bIsRequiredMetadata = true;
+                                std::string CustomMetadataRawString = AttributeArguments.back().spelling;
+                                if (!CustomMetadataRawString.empty())
+                                {
+                                    std::string A,B,C;
+                                    A = CustomMetadataRawString.substr(1, CustomMetadataRawString.size() - 2);
+                                    // replace [\"] to ["]
+                                    for (size_t i = 0; i < A.size(); i++)
+                                    {
+                                        if (A[i] == '\\' && i + 1 < CustomMetadataRawString.size())
+                                        {
+                                            B.push_back(A[i + 1]);
+                                            i++;
+                                        }
+                                        else
+                                        {
+                                            B.push_back(A[i]);
+                                        }
+                                    }
+                                    if (!B.empty())
+                                    {
+                                        {
+                                            // split metadata by [,]
+                                            bool IsInStringRange = false;
+                                            uint32_t PreviousSubStringPos = 0;
+                                            for (size_t i = 0; i < B.size(); i++)
+                                            {
+                                                if (B[i] == '\"')
+                                                {
+                                                    if (IsInStringRange)
+                                                    {
+                                                        if (B[i - 1] != '\\')
+                                                        {
+                                                            IsInStringRange = false;
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        IsInStringRange = true;
+                                                    }
+                                                }
+                                                if (!IsInStringRange)
+                                                {
+                                                    if (B[i] == ',')
+                                                    {
+                                                        CustomMetadataStrings.push_back(B.substr(PreviousSubStringPos, i - PreviousSubStringPos));
+                                                        PreviousSubStringPos = i + 1;
+                                                    }
+                                                }
+                                            }
+                                            CustomMetadataStrings.push_back(B.substr(PreviousSubStringPos, B.size() - PreviousSubStringPos));
+                                        }
+
+                                        // TODO : remove illegal metadata and warning
+                                        for (size_t i = 0; i < CustomMetadataStrings.size(); i++)
+                                        {
+                                            //std::string ReplaceCustomMetadata;
+                                            //bool IsInStringRange = false;
+                                            //for (size_t j = 0; j < CustomMetadatas[i].size(); j++)
+                                            //{
+                                            //    if (CustomMetadatas[i][j] == '\"')
+                                            //    {
+                                            //        if (IsInStringRange)
+                                            //        {
+                                            //            if (CustomMetadatas[i][j - 1] != '\\')
+                                            //            {
+                                            //                IsInStringRange = false;
+                                            //            }
+                                            //        }
+                                            //        else
+                                            //        {
+                                            //            IsInStringRange = true;
+                                            //        }
+                                            //    }
+                                            //    if (IsInStringRange && CustomMetadatas[i][j] == '\\' && j + 1 < CustomMetadatas[i].size())
+                                            //    {
+                                            //        ReplaceCustomMetadata.push_back(CustomMetadatas[i][j + 1]);
+                                            //        j++;
+                                            //    }
+                                            //    else
+                                            //    {
+                                            //        ReplaceCustomMetadata.push_back(CustomMetadatas[i][j]);
+                                            //    }
+                                            //}
+                                            CustomMetadataStrings[i] = FormatCustomMetadata(CustomMetadataStrings[i]);
+                                            size_t Pos = CustomMetadataStrings[i].find_first_of('=');
+                                            std::string Key;
+                                            std::string Value;
+                                            if (Pos == std::string::npos) {
+                                                Key = CustomMetadataStrings[i];
+                                            }
+                                            else
+                                            {
+                                                Key = CustomMetadataStrings[i].substr(0, Pos);
+                                                size_t Count = std::string::npos;
+                                                if (CustomMetadataStrings[i][Pos + 1] == '\"' && 
+                                                    CustomMetadataStrings[i].back() == '\"')
+                                                {
+                                                    Pos += 1;
+                                                    Count = CustomMetadataStrings[i].size() - Pos - 2;
+                                                }
+                                                Value = CustomMetadataStrings[i].substr(Pos + 1, Count);
+                                            }
+                                            CustomMetadatas.insert_or_assign(Key, Value);
+                                            std::cout << Key << " : " << Value << std::endl;
+                                        }
+                                    }
+                                }
+                                //CustomMetadatas.push_back(fullstringmetadata);
                             }
                         }
                     }
@@ -195,6 +306,7 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                 {
                     auto& CppClass = static_cast<const cppast::cpp_class&>(e);
                     CodeGenerator.ClassBegin(CppClass.name());
+                    CodeGenerator.ClassStaticInitializer_.set("MetadataKVList", MakeTmplMetadataKVList(CustomMetadatas));
                     ContainerEntityExitCallback = [&]{ CodeGenerator.ClassEnd(); };
                     //CType* Type = CodeGenerator.RequiredMetadata<CType>(e.name());
                     //CodeGenerator.PushMetadata(StaticClass<CType>());
@@ -257,6 +369,7 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                     PropertyInitializerFunctionData.set("PropertyTypeClass", ToPropertyTypeName(PropertyInfo.PropertyFlag));
                     PropertyInitializerFunctionData.set("PropertyAddressOffset", fmt::format("offsetof({}, {}::{})", ClassName, ClassName, CppMemberVariable.name()));
                     PropertyInitializerFunctionData.set("PropertyFlags", fmt::format("{:#x}", PropertyInfo.PropertyFlag));
+                    PropertyInitializerFunctionData.set("MetadataKVList", MakeTmplMetadataKVList(CustomMetadatas));
                     if (PropertyInfo.PropertyFlag & EPF_ClassFlag)
                     {
                         PropertyInitializerFunctionData.set("CustomExpression",
@@ -283,6 +396,37 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                     CodeGenerator.FunctionBegin(CppMemberFunction.name());
                     ContainerEntityExitCallback = [&] { CodeGenerator.FunctionEnd(); };
                 }
+                else if (e.kind() == cppast::cpp_entity_kind::enum_t)
+                {
+                    auto& CppEnum = static_cast<const cppast::cpp_enum&>(e);
+                    auto& CppEnumUnderlyingType = static_cast<const cppast::cpp_builtin_type&>(CppEnum.underlying_type());
+                    CodeGenerator.EnumBegin(CppEnum.name());
+                    //kainjow::mustache::data MetadataKVList{ kainjow::mustache::data::type::list };
+                    //for (auto CustomMetadata : CustomMetadatas)
+                    //{
+                    //    kainjow::mustache::data MetadataKV;
+                    //    MetadataKV.set("Key", CustomMetadata.first);
+                    //    MetadataKV.set("Value", CustomMetadata.second);
+                    //    MetadataKVList.push_back(MetadataKV);
+                    //}
+                    CodeGenerator.EnumStaticInitializer_.set("MetadataKVList", MakeTmplMetadataKVList(CustomMetadatas));
+                    ContainerEntityExitCallback = [&] { CodeGenerator.EnumEnd(); };
+                }
+            }
+            if (e.kind() == cppast::cpp_entity_kind::enum_value_t)
+            {
+                if (auto EnumNameData = CodeGenerator.EnumStaticInitializer_.get("EnumName"))
+                {
+                    const std::string& EnumName = EnumNameData->string_value();
+                    auto& CppEnumValue = static_cast<const cppast::cpp_enum_value&>(e);
+                    kainjow::mustache::data EnumKV;
+                    EnumKV.set("Value",  "static_cast<uint64_t>(" + EnumName + "::" + CppEnumValue.name() + ")");
+                    EnumKV.set("Name", CppEnumValue.name());
+                    CodeGenerator.EnumKVList_.push_back(EnumKV);
+                    CppEnumValue.name();
+                }
+            //literal_t,
+            // unexposed_t,
             }
             if (info.event == cppast::visitor_info::container_entity_enter)
             {
@@ -333,9 +477,10 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
 //    }
 //    return count;
 //}
-
 int main(int argc, char** argv) try
 {
+    std::string ExportName;
+    bool IsDebugRun = false;
     int ArgC;
     char** ArgV;
     std::string currentPath = std::filesystem::current_path().string();
@@ -348,12 +493,18 @@ int main(int argc, char** argv) try
             "../../Tests/Source/Engine.h",
             "../../Tests/Source/TimerManager.h",
         };
+        ExportName = "Tests";
         CommandLines[0] = argv[0];
         ArgC = CommandLines.size();
         ArgV = (char**)CommandLines.data();
+        IsDebugRun = true;
     }
     else
     {
+        for (size_t i = 0; i < argc; i++)
+        {
+            std::cout << argv[i] << std::endl;
+        }
         ArgC = argc;
         ArgV = argv;
     }
@@ -369,6 +520,8 @@ int main(int argc, char** argv) try
             cxxopts::value<std::vector<std::string>>());
     option_list.add_options("compilation")
         ("database_dir", "set the directory where a 'compile_commands.json' file is located containing build information",
+            cxxopts::value<std::string>())
+        ("export_name", "set the export api",
             cxxopts::value<std::string>())
         ("database_file", "set the file name whose configuration will be used regardless of the current file name",
             cxxopts::value<std::string>())
@@ -414,7 +567,7 @@ int main(int argc, char** argv) try
             std::string InputFile = InputFiles[i];
             std::string InputFileFullPath = std::filesystem::weakly_canonical(InputFile).string();
             std::string OuputHeaderFileFullPath = GetOuputHeaderFileFullPath(InputFileFullPath);
-            if (std::filesystem::exists(OuputHeaderFileFullPath))
+            if (std::filesystem::exists(OuputHeaderFileFullPath) && !IsDebugRun)
             {
                 std::filesystem::file_time_type OuputFileLastWriteTime = std::filesystem::last_write_time(OuputHeaderFileFullPath);
                 std::filesystem::file_time_type InputFileLastWriteTime = std::filesystem::last_write_time(InputFileFullPath);
@@ -438,7 +591,8 @@ int main(int argc, char** argv) try
                     config
                     = cppast::libclang_compile_config(database, InputFile);
             }
-
+            if (options.count("export_name"))
+                ExportName = options["export_name"].as<std::string>();
             if (options.count("verbose"))
                 config.write_preprocessed(true);
 
@@ -530,7 +684,19 @@ int main(int argc, char** argv) try
             kainjow::mustache::mustache HeaderTmpl(GeneratedTemplates::HeaderTemplate);
             kainjow::mustache::data HeaderTmplData;
             kainjow::mustache::data IncludeFileList(kainjow::mustache::data::type::list);
+            if (!ExportName.empty())
+            {
+                IncludeFileList.push_back(ExportName + "Export.h");
+                std::string UpperExportName = ExportName;
+                std::transform(UpperExportName.begin(), UpperExportName.end(), UpperExportName.begin(), [](unsigned char c) { return std::toupper(c); });
+                HeaderTmplData.set("ExportApi", UpperExportName + "_API");
+            }
+            else
+            {
+                HeaderTmplData.set("ExportApi", "");
+            }
             HeaderTmplData.set("IncludeFileList", IncludeFileList);
+            HeaderTmplData.set("EnumStaticInitializerList", CodeGenerator.EnumStaticInitializerList_);
             std::string GeneratedHeader = HeaderTmpl.render(HeaderTmplData);
             OuputHeaderFileStream.write(GeneratedHeader.data(), GeneratedHeader.size());
             OuputHeaderFileStream.close();

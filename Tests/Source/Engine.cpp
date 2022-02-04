@@ -10,4 +10,16 @@ int main()
         CProperty* Property = Class->GetProperties()[i];
         std::cout << Property->GetName() << std::hex << Property->GetFlag() << std::dec <<  std::endl;
     }
+    auto Enum = TEnum<ETestEnum2>::StaticEnum();
+    auto& Values = Enum->GetValues();
+    for (auto & Value : Values)
+    {
+        std::cout << Value << " : ";
+        auto& Names = Enum->ToName(Value);
+        for (size_t i = 0; i < Names.size(); i++)
+        {
+            std::cout  << Names[i] << ", ";
+        }
+        std::cout << std::endl;
+    }
 }

@@ -28,6 +28,20 @@ public:
 		ClassStaticInitializer_ = kainjow::mustache::data();
 	}
 
+	kainjow::mustache::data& EnumBegin(const std::string& EnumName)
+	{
+		EnumStaticInitializer_.set("EnumName", EnumName);
+		return EnumStaticInitializer_;
+	}
+
+	void EnumEnd()
+	{
+		EnumStaticInitializer_.set("EnumKVList", EnumKVList_);
+		EnumKVList_ = kainjow::mustache::data{ kainjow::mustache::data::type::list };
+		EnumStaticInitializerList_.push_back(EnumStaticInitializer_);
+		EnumStaticInitializer_ = kainjow::mustache::data();
+	}
+
 	kainjow::mustache::data& PropertyBegin(const std::string& InPropertyName)
 	{
 		PropertyInitializer_.set("PropertyName", InPropertyName);
@@ -56,6 +70,7 @@ public:
 	{
 		SourceData_.set("ClassStaticInitializerList", ClassStaticInitializerList_);
 		SourceData_.set("IncludeFileList", IncludeFileList_);
+		SourceData_.set("EnumStaticInitializerList", EnumStaticInitializerList_);
 		return SourceTmpl_.render(SourceData_);
 	}
 
@@ -69,10 +84,17 @@ public:
 	kainjow::mustache::data PropertyInitializerList_{ kainjow::mustache::data::type::list };
 	kainjow::mustache::data PropertyInitializerFunctionList_{ kainjow::mustache::data::type::list };
 
-	kainjow::mustache::data IncludeFileList_{ kainjow::mustache::data::type::list };
-
 	kainjow::mustache::data FunctionInitializer_;
 	kainjow::mustache::data FunctionInitializerList_{ kainjow::mustache::data::type::list };
+
+
+	kainjow::mustache::data EnumKVList_{ kainjow::mustache::data::type::list };
+	kainjow::mustache::data EnumStaticInitializer_;
+	kainjow::mustache::data EnumStaticInitializerList_{ kainjow::mustache::data::type::list };
+
+
+	kainjow::mustache::data IncludeFileList_{ kainjow::mustache::data::type::list };
+
 
 	kainjow::mustache::data HeaderData_;
 	kainjow::mustache::data SourceData_;

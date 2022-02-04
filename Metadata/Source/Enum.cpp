@@ -1,17 +1,54 @@
 #include "Enum.h"
+#include "StaticType.h"
 
-void CEnum::AddEnumValue(uint64_t InValue, std::string InName)
+static std::vector<std::string> EmptyVector;
+
+void CEnum::AddName(uint64_t InValue, const std::string& InName)
 {
-    ValueToName_.insert(std::make_pair(InValue, InName));
+    Values_.insert(InValue);
+    ValueToName_[InValue].push_back(InName);
+    assert(!NameToValue_.contains(InName));
     NameToValue_.insert(std::make_pair(InName, InValue));
 }
 
-const std::string& CEnum::ToName(uint64_t InValue)
+void CEnum::AddDisplayName(uint64_t InValue, const std::string& InDisplayName)
 {
-    return ValueToName_[InValue];
+    assert(!NameToValue_.contains(InDisplayName));
+    NameToValue_.insert(std::make_pair(InDisplayName, InValue));
+    ValueToDisplayName_.insert(std::make_pair(InValue, InDisplayName));
+}
+
+const std::vector<std::string>& CEnum::ToName(uint64_t InValue)
+{
+    auto It = ValueToName_.find(InValue);
+    if (It != ValueToName_.end())
+    {
+        return It->second;
+    }
+    return EmptyVector;
+}
+
+const std::string& CEnum::ToDisplayName(uint64_t InValue)
+{
+    auto It = ValueToDisplayName_.find(InValue);
+    if (It != ValueToDisplayName_.end())
+    {
+        return It->second;
+    }
+    return CStaticString::Empty;
 }
 
 uint64_t CEnum::ToValue(const std::string& InName)
 {
-    return NameToValue_[InName];
+    auto It = NameToValue_.find(InName);
+    if (It != NameToValue_.end())
+    {
+        return It->second;
+    }
+    return UINT64_MAX;
+}
+
+std::set<uint64_t>& CEnum::GetValues()
+{
+    return Values_;
 }
