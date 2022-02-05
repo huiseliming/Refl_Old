@@ -5,7 +5,7 @@
 #include "Property.h"
 
 
-class METADATA_API CFunction : public CMetadata
+class METADATA_API CFunction : public CReflRecord
 {
 //public:
 //    CFunction(const std::string& name, void* ptr)

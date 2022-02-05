@@ -44,11 +44,11 @@ enum EPropertyFlag : uint64_t
 };
 
 
-class CProperty : public CMetadata
+class CProperty : public CReflRecord
 {
 public:
     CProperty(const std::string& Name_)
-        : CMetadata(Name_)
+        : CReflRecord(Name_)
         , Flag_(0)
         , AddressOffset_(0)
     {

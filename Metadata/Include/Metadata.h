@@ -42,34 +42,34 @@ static int64_t MetadataId;                 \
 //};
 
 
-class METADATA_API CMetadata
+class METADATA_API CReflRecord
 {
     friend class CMetadataManager;
 public:
-    CMetadata(const std::string& Name)
+    CReflRecord(const std::string& Name)
         : Name_(Name)
     {
         //Metadatas.push_back(this);
         //Id_ = IdCounter++;
     }
-    virtual ~CMetadata() = default;
+    virtual ~CReflRecord() = default;
 
     std::string GetMetadataValue(const std::string& Key)
     {
-        if (auto it = KeyToValue_.find(Key); it != KeyToValue_.end())
+        if (auto it = Metadatas_.find(Key); it != Metadatas_.end())
             return it->second;
         return nullptr;
     }
 
     bool ContainsMetadataKey(const std::string& Key)
     {
-        return KeyToValue_.contains(Key);
+        return Metadatas_.contains(Key);
     }
 
     void AddMetadata(const std::string& Key, const std::string& Value)
     {
-        if (KeyToValue_.contains(Key)) assert(false);
-        KeyToValue_.insert_or_assign(Key, Value);
+        if (Metadatas_.contains(Key)) assert(false);
+        Metadatas_.insert_or_assign(Key, Value);
     }
 
     void SetName(const std::string& Name) { Name_ = Name; }
@@ -79,10 +79,10 @@ public:
 protected:
     int64_t Id_{INT64_MAX};
     std::string Name_;
-    std::unordered_map<std::string, std::string> KeyToValue_;
+    std::unordered_map<std::string, std::string> Metadatas_;
 
 private:
     static int64_t IdCounter;
-    static std::vector<CMetadata*> Metadatas;
+    static std::vector<CReflRecord*> Metadatas;
 };
 

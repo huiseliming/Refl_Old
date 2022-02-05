@@ -5,11 +5,11 @@
 class CClass;
 class CEnum;
 
-class METADATA_API CType : public CMetadata
+class METADATA_API CType : public CReflRecord
 {
 public:
     CType(const std::string& InName, uint32_t InSize = 0)
-        : CMetadata(InName)
+        : CReflRecord(InName)
         , Size_(InSize)
     {
     }

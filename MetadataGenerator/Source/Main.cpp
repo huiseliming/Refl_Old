@@ -423,7 +423,14 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                     EnumKV.set("Value",  "static_cast<uint64_t>(" + EnumName + "::" + CppEnumValue.name() + ")");
                     EnumKV.set("Name", CppEnumValue.name());
                     CodeGenerator.EnumKVList_.push_back(EnumKV);
-                    CppEnumValue.name();
+                    auto It = CustomMetadatas.find("DisplayName");
+                    if (It != CustomMetadatas.end())
+                    {
+                        kainjow::mustache::data EnumDisplayName;
+                        EnumDisplayName.set("Value", "static_cast<uint64_t>(" + EnumName + "::" + CppEnumValue.name() + ")");
+                        EnumDisplayName.set("DisplayName", It->second);
+                        CodeGenerator.EnumDisplayNameList_.push_back(EnumDisplayName);
+                    }
                 }
             //literal_t,
             // unexposed_t,

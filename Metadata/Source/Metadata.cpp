@@ -1,4 +1,4 @@
 #include "Metadata.h"
 
-int64_t CMetadata::IdCounter;
-std::vector<CMetadata*> CMetadata::Metadatas;
+int64_t CReflRecord::IdCounter;
+std::vector<CReflRecord*> CReflRecord::Metadatas;

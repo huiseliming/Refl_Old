@@ -7,11 +7,11 @@
 
 enum ENUM(ClassName = "测试枚举") ETestEnum
 {
-	Test1,
-	Test2,
-	Test3,
-	Test4,
-	Test5,
+	Test1 METADATA(DisplayName = "测试1"),
+	Test2 METADATA(DisplayName = "测试2"),
+	Test3 METADATA(DisplayName = "测试3"),
+	Test4 METADATA(DisplayName = "测试4"),
+	Test5 METADATA(DisplayName = "测试5"),
 };
 
 #ifdef ENUM_ETestEnum_GENERATED_BODY

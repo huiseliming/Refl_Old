@@ -38,6 +38,8 @@ public:
 	{
 		EnumStaticInitializer_.set("EnumKVList", EnumKVList_);
 		EnumKVList_ = kainjow::mustache::data{ kainjow::mustache::data::type::list };
+		EnumStaticInitializer_.set("EnumDisplayNameList", EnumDisplayNameList_);
+		EnumDisplayNameList_ = kainjow::mustache::data{ kainjow::mustache::data::type::list };
 		EnumStaticInitializerList_.push_back(EnumStaticInitializer_);
 		EnumStaticInitializer_ = kainjow::mustache::data();
 	}
@@ -87,8 +89,8 @@ public:
 	kainjow::mustache::data FunctionInitializer_;
 	kainjow::mustache::data FunctionInitializerList_{ kainjow::mustache::data::type::list };
 
-
 	kainjow::mustache::data EnumKVList_{ kainjow::mustache::data::type::list };
+	kainjow::mustache::data EnumDisplayNameList_{ kainjow::mustache::data::type::list };
 	kainjow::mustache::data EnumStaticInitializer_;
 	kainjow::mustache::data EnumStaticInitializerList_{ kainjow::mustache::data::type::list };
 
