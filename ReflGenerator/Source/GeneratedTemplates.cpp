@@ -104,6 +104,8 @@ const char* SourceTemplate =
 "    return &Enum;\n"
 "}\n"
 "\n"
+"TAutoInitializer<{{EnumName}}> ENUM_{{EnumName}}_AUTO_INITIALIZER;\n"
+"\n"
 "{{/EnumStaticInitializerList}}"
 ;
 

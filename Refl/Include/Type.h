@@ -25,22 +25,27 @@ private:
 };
 
 template<typename T>
-struct TAutoInitializer
-{
-    TAutoInitializer()
-    {
-        CClass* Class = T::StaticClass();
-        assert(!CType::StaticTable().contains(Class->GetName()));
-        CType::StaticTable().insert(std::make_pair(Class->GetName(), Class));
-    }
-};
-
-template<typename T>
 struct TEnum
 {
     static CEnum* StaticEnum();
     static CEnum* ENUM_STATIC_INITIALIZER();
 };
+
+template<typename T>
+struct TAutoInitializer
+{
+    TAutoInitializer()
+    {
+        CType* Type = nullptr;
+         
+        if constexpr (std::is_enum_v<T>) Type = TEnum<T>::StaticEnum();
+        else  Type = T::StaticClass();
+        assert(!CType::StaticTable().contains(Type->GetName()));
+        CType::StaticTable().insert(std::make_pair(Type->GetName(), Type));
+    }
+};
+
+
 
 //
 //enum EQualifiedTypeFlagBit : uint32_t
