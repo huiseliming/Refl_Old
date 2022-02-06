@@ -21,10 +21,11 @@
 #endif
 
 #define GENERATED_BODY()                   \
-public:                                    \
+private:                                   \
 static CClass* CLASS_STATIC_INITIALIZER(); \
+public:                                    \
 static CClass* StaticClass();              \
-static int64_t MetadataId;                 \
+//static int64_t MetadataId;                 \
 
 //
 //struct CMetadataValue

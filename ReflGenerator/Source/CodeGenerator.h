@@ -4,6 +4,8 @@
 #include "mustache.hpp"
 #include "Helper.h"
 
+
+
 class CCodeGenerator
 {
 protected:
@@ -21,9 +23,8 @@ public:
 
 	void ClassEnd()
 	{
-		ClassStaticInitializer_.set("PropertyInitializerFunctionList", PropertyInitializerFunctionList_);
-		ClassStaticInitializer_.set("FunctionInitializerList", FunctionInitializerList_);
-		ClassStaticInitializer_.set("PropertyInitializerList", PropertyInitializerList_);
+		ClassStaticInitializer_.set("ExpressionList", ClassStaticInitializerExpressionList_);
+		ClassStaticInitializerExpressionList_= kainjow::mustache::data{ kainjow::mustache::data::type::list };
 		ClassStaticInitializerList_.push_back(ClassStaticInitializer_);
 		ClassStaticInitializer_ = kainjow::mustache::data();
 	}
@@ -36,10 +37,8 @@ public:
 
 	void EnumEnd()
 	{
-		EnumStaticInitializer_.set("EnumKVList", EnumKVList_);
-		EnumKVList_ = kainjow::mustache::data{ kainjow::mustache::data::type::list };
-		EnumStaticInitializer_.set("EnumDisplayNameList", EnumDisplayNameList_);
-		EnumDisplayNameList_ = kainjow::mustache::data{ kainjow::mustache::data::type::list };
+		EnumStaticInitializer_.set("ExpressionList", EnumStaticInitializerExpressionList_);
+		EnumStaticInitializerExpressionList_ = kainjow::mustache::data{ kainjow::mustache::data::type::list };
 		EnumStaticInitializerList_.push_back(EnumStaticInitializer_);
 		EnumStaticInitializer_ = kainjow::mustache::data();
 	}
@@ -52,6 +51,8 @@ public:
 
 	void PropertyEnd()
 	{
+		PropertyInitializer_.set("ExpressionList", PropertyInitializerExpressionList_);
+		PropertyInitializerExpressionList_ = kainjow::mustache::data{ kainjow::mustache::data::type::list };
 		PropertyInitializerList_.push_back(PropertyInitializer_);
 		PropertyInitializer_ = kainjow::mustache::data();
 	}
@@ -64,12 +65,15 @@ public:
 
 	void FunctionEnd()
 	{
+		FunctionInitializer_.set("ExpressionList", FunctionInitializerExpressionList_);
+		FunctionInitializerExpressionList_ = kainjow::mustache::data{ kainjow::mustache::data::type::list };
 		FunctionInitializerList_.push_back(FunctionInitializer_);
 		FunctionInitializer_ = kainjow::mustache::data();
 	}
 
 	std::string GenerateGeneratedFile()
 	{
+		SourceData_.set("GlobalExpressionList", GlobalExpressionList_);
 		SourceData_.set("ClassStaticInitializerList", ClassStaticInitializerList_);
 		SourceData_.set("IncludeFileList", IncludeFileList_);
 		SourceData_.set("EnumStaticInitializerList", EnumStaticInitializerList_);
@@ -78,19 +82,25 @@ public:
 
 	kainjow::mustache::mustache HeaderTmpl_;
 	kainjow::mustache::mustache SourceTmpl_;
-
+	
+	kainjow::mustache::data ClassStaticInitializerExpressionList_{ kainjow::mustache::data::type::list };
 	kainjow::mustache::data ClassStaticInitializer_;
 	kainjow::mustache::data ClassStaticInitializerList_{ kainjow::mustache::data::type::list };
 
+	kainjow::mustache::data PropertyInitializerExpressionList_{ kainjow::mustache::data::type::list };
 	kainjow::mustache::data PropertyInitializer_;
 	kainjow::mustache::data PropertyInitializerList_{ kainjow::mustache::data::type::list };
-	kainjow::mustache::data PropertyInitializerFunctionList_{ kainjow::mustache::data::type::list };
 
+	kainjow::mustache::data GlobalExpressionList_{ kainjow::mustache::data::type::list };
+
+	kainjow::mustache::data FunctionInitializerExpressionList_{ kainjow::mustache::data::type::list };
 	kainjow::mustache::data FunctionInitializer_;
 	kainjow::mustache::data FunctionInitializerList_{ kainjow::mustache::data::type::list };
 
 	kainjow::mustache::data EnumKVList_{ kainjow::mustache::data::type::list };
 	kainjow::mustache::data EnumDisplayNameList_{ kainjow::mustache::data::type::list };
+
+	kainjow::mustache::data EnumStaticInitializerExpressionList_{ kainjow::mustache::data::type::list };
 	kainjow::mustache::data EnumStaticInitializer_;
 	kainjow::mustache::data EnumStaticInitializerList_{ kainjow::mustache::data::type::list };
 

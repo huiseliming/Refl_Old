@@ -11,7 +11,7 @@ enum ENUM(ClassName = "测试枚举") ETestEnum
 	Test2 METADATA(DisplayName = "测试2"),
 	Test3 METADATA(DisplayName = "测试3"),
 	Test4 METADATA(DisplayName = "测试4"),
-	Test5 METADATA(DisplayName = "测试5"),
+	Test5 METADATA(DisplayName = "测试522"),
 };
 
 #ifdef ENUM_ETestEnum_GENERATED_BODY
@@ -58,7 +58,7 @@ public:
 	PROPERTY((ClassName = "测试属性"))
 	const volatile int32_t& TestUInt32Property;
 
-	PROPERTY(meta = "")
+	PROPERTY(meta = "ds")
 	const volatile CEngine* TestEnginePtrProperty;
 	//PROPERTY()
 	//int64_t TestUInt64Property;
@@ -75,11 +75,11 @@ public:
 	//int32_t* TestPtrProperty;
 	//PROPERTY()
 	//std::vector<const volatile int32_t*> TestCVPtrVectorProperty;
-	PROPERTY()
+	PROPERTY((ClassName = "测试属性PtrVector"))
 	std::vector<int32_t*> TestPtrVectorProperty;
 
-	//PROPERTY()
-	//std::vector<CEngine*> TestEnginePtrVectorProperty;
+	PROPERTY((ClassName = "测试属性EnginePtrVector"))
+	std::vector<CEngine*> TestEnginePtrVectorProperty;
 
 	//PROPERTY()
 	//const volatile int32_t& TestCVPtrProperty;

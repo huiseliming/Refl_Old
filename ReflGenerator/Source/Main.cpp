@@ -242,34 +242,6 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                                         // TODO : remove illegal metadata and warning
                                         for (size_t i = 0; i < CustomMetadataStrings.size(); i++)
                                         {
-                                            //std::string ReplaceCustomMetadata;
-                                            //bool IsInStringRange = false;
-                                            //for (size_t j = 0; j < CustomMetadatas[i].size(); j++)
-                                            //{
-                                            //    if (CustomMetadatas[i][j] == '\"')
-                                            //    {
-                                            //        if (IsInStringRange)
-                                            //        {
-                                            //            if (CustomMetadatas[i][j - 1] != '\\')
-                                            //            {
-                                            //                IsInStringRange = false;
-                                            //            }
-                                            //        }
-                                            //        else
-                                            //        {
-                                            //            IsInStringRange = true;
-                                            //        }
-                                            //    }
-                                            //    if (IsInStringRange && CustomMetadatas[i][j] == '\\' && j + 1 < CustomMetadatas[i].size())
-                                            //    {
-                                            //        ReplaceCustomMetadata.push_back(CustomMetadatas[i][j + 1]);
-                                            //        j++;
-                                            //    }
-                                            //    else
-                                            //    {
-                                            //        ReplaceCustomMetadata.push_back(CustomMetadatas[i][j]);
-                                            //    }
-                                            //}
                                             CustomMetadataStrings[i] = FormatCustomMetadata(CustomMetadataStrings[i]);
                                             size_t Pos = CustomMetadataStrings[i].find_first_of('=');
                                             std::string Key;
@@ -294,7 +266,6 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                                         }
                                     }
                                 }
-                                //CustomMetadatas.push_back(fullstringmetadata);
                             }
                         }
                     }
@@ -306,12 +277,16 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                 {
                     auto& CppClass = static_cast<const cppast::cpp_class&>(e);
                     CodeGenerator.ClassBegin(CppClass.name());
-                    CodeGenerator.ClassStaticInitializer_.set("MetadataKVList", MakeTmplMetadataKVList(CustomMetadatas));
-                    kainjow::mustache::data AddBaseList{ kainjow::mustache::data::type::list };
+                    for (auto Metadata : CustomMetadatas)
+                    {
+                        CodeGenerator.ClassStaticInitializerExpressionList_.push_back(
+                            "    Cls.AddMetadata(\"" + Metadata.first + "\", \"" + Metadata.second + "\");\n"
+                        );
+                    }
                     for (auto It = CppClass.bases().begin(); CppClass.bases().end() != It; It++)
                     {
                         std::string BaseClassName = It->name();
-                        AddBaseList.push_back(
+                        CodeGenerator.ClassStaticInitializerExpressionList_.push_back(
                             "    CType::PostStaticInitializerEventList().push_back([&]{\n"
                             "        if(CType::NameToType.contains(\"" + BaseClassName + "\"))\n"
                             "           Cls.AddBase(reinterpret_cast<CClass*>(CType::NameToType[\"" + BaseClassName + "\"]));\n"
@@ -320,10 +295,7 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                             "    });\n"
                         );
                     }
-                    CodeGenerator.ClassStaticInitializer_.set("AddBaseList", AddBaseList);
                     ContainerEntityExitCallback = [&]{ CodeGenerator.ClassEnd(); };
-                    //CType* Type = CodeGenerator.RequiredMetadata<CType>(e.name());
-                    //CodeGenerator.PushMetadata(StaticClass<CType>());
                 }
                 else if (e.kind() == cppast::cpp_entity_kind::member_variable_t)
                 {
@@ -347,6 +319,7 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                                 CPropertyInfo VectorElementPropertyInfo = ParseCppTypeToPropertyInfo(EntityIndex, CppMemberVariableVectorType);
                                 kainjow::mustache::mustache VectorElementPropertyInitializerFunctionTmpl(GeneratedTemplates::PropertyInitializerFunctionTemplate);
                                 kainjow::mustache::data VectorElementPropertyInitializerFunctionData;
+                                kainjow::mustache::data VectorElementPropertyInitializerFunctionDataExpressionList{ kainjow::mustache::data::type::list };
                                 VectorElementPropertyInitializerFunctionData.set("ClassName", ClassName);
                                 VectorElementPropertyInitializerFunctionData.set("PropertyName", CppMemberVariable.name() + "__VectorElement");
                                 VectorElementPropertyInitializerFunctionData.set("PropertyTypeClass", ToPropertyTypeName(VectorElementPropertyInfo.PropertyFlag));
@@ -354,19 +327,18 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                                 VectorElementPropertyInitializerFunctionData.set("PropertyFlags", fmt::format("{:#x}", VectorElementPropertyInfo.PropertyFlag));
                                 if (VectorElementPropertyInfo.PropertyFlag & EPF_ClassFlag)
                                 {
-                                    VectorElementPropertyInitializerFunctionData.set("CustomExpression",
+                                    VectorElementPropertyInitializerFunctionDataExpressionList.push_back(
                                         "    CType::PostStaticInitializerEventList().push_back([&]{\n"
                                         "        assert(CType::NameToType.contains(\"" + VectorElementPropertyInfo.PropertyClassName + "\"));\n"
                                         "        Prop.SetClass(reinterpret_cast<CClass*>(CType::NameToType[\"" + VectorElementPropertyInfo.PropertyClassName + "\"]));\n"
                                         "    });\n"
                                     );
                                 }
-                                CodeGenerator.PropertyInitializerFunctionList_.push_back(VectorElementPropertyInitializerFunctionTmpl.render(VectorElementPropertyInitializerFunctionData));
+                                VectorElementPropertyInitializerFunctionData.set("ExpressionList", VectorElementPropertyInitializerFunctionDataExpressionList);
+                                CodeGenerator.GlobalExpressionList_.push_back(VectorElementPropertyInitializerFunctionTmpl.render(VectorElementPropertyInitializerFunctionData));
                                 PropertyInfo.PropertyFlag |= EPF_VectorFlag;
                             }
                         }
-                        //Field->QualifiedType.Type = ToString(CppMemberVariableBuiltinType.builtin_type_kind());
-                        //cppast::to_string(cppast::cpp_type_kind::pointer_t);
                     }
                     else
                     {
@@ -376,17 +348,23 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                     {
                         PropertyInfo.PropertyFlag |= EPF_UnknowFlag;
                     }
-                    kainjow::mustache::mustache PropertyInitializerFunctionTmpl(GeneratedTemplates::PropertyInitializerFunctionTemplate);
-                    kainjow::mustache::data PropertyInitializerFunctionData;
-                    PropertyInitializerFunctionData.set("ClassName", ClassName);
-                    PropertyInitializerFunctionData.set("PropertyName", CppMemberVariable.name());
-                    PropertyInitializerFunctionData.set("PropertyTypeClass", ToPropertyTypeName(PropertyInfo.PropertyFlag));
-                    PropertyInitializerFunctionData.set("PropertyAddressOffset", fmt::format("offsetof({}, {}::{})", ClassName, ClassName, CppMemberVariable.name()));
-                    PropertyInitializerFunctionData.set("PropertyFlags", fmt::format("{:#x}", PropertyInfo.PropertyFlag));
-                    PropertyInitializerFunctionData.set("MetadataKVList", MakeTmplMetadataKVList(CustomMetadatas));
+                    kainjow::mustache::mustache PropertyStaticInitializerTmpl(GeneratedTemplates::PropertyInitializerFunctionTemplate);
+                    kainjow::mustache::data PropertyStaticInitializerData;
+                    kainjow::mustache::data PropertyStaticInitializerDataExpressionList{ kainjow::mustache::data::type::list };
+                    PropertyStaticInitializerData.set("ClassName", ClassName);
+                    PropertyStaticInitializerData.set("PropertyName", CppMemberVariable.name());
+                    PropertyStaticInitializerData.set("PropertyTypeClass", ToPropertyTypeName(PropertyInfo.PropertyFlag));
+                    PropertyStaticInitializerData.set("PropertyAddressOffset", fmt::format("offsetof({}, {}::{})", ClassName, ClassName, CppMemberVariable.name()));
+                    PropertyStaticInitializerData.set("PropertyFlags", fmt::format("{:#x}", PropertyInfo.PropertyFlag));
+                    for (auto Metadata : CustomMetadatas)
+                    {
+                        PropertyStaticInitializerDataExpressionList.push_back(
+                            "    Prop.AddMetadata(\"" + Metadata.first + "\", \"" + Metadata.second + "\");\n"
+                        );
+                    }
                     if (PropertyInfo.PropertyFlag & EPF_ClassFlag)
                     {
-                        PropertyInitializerFunctionData.set("CustomExpression",
+                        PropertyStaticInitializerDataExpressionList.push_back(
                             "    CType::PostStaticInitializerEventList().push_back([&]{\n"
                             "        assert(CType::NameToType.contains(\"" + PropertyInfo.PropertyClassName + "\"));\n"
                             "        Prop.SetClass(reinterpret_cast<CClass*>(CType::NameToType[\"" + PropertyInfo.PropertyClassName + "\"]));\n"
@@ -395,11 +373,15 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                     }
                     else if (PropertyInfo.PropertyFlag & EPF_VectorFlag)
                     {
-                        PropertyInitializerFunctionData.set("CustomExpression",
+                        PropertyStaticInitializerDataExpressionList.push_back(
                             "    Prop.SetDataProperty(CLS_" + ClassName + "__PROP_" + CppMemberVariable.name() + "__VectorElement__STATIC_INITIALIZER());\n"
                         );
                     }
-                    CodeGenerator.PropertyInitializerFunctionList_.push_back(PropertyInitializerFunctionTmpl.render(PropertyInitializerFunctionData));
+                    PropertyStaticInitializerData.set("ExpressionList", PropertyStaticInitializerDataExpressionList);
+                    CodeGenerator.GlobalExpressionList_.push_back(PropertyStaticInitializerTmpl.render(PropertyStaticInitializerData));
+                    CodeGenerator.ClassStaticInitializerExpressionList_.push_back(
+                        "    Cls.AddProperty(CLS_" + ClassName + "__PROP_" + CppMemberVariable.name() + "__STATIC_INITIALIZER());\n"
+                    );
                     CodeGenerator.PropertyInitializer_.set("ClassName", ClassName);
                     CodeGenerator.PropertyInitializer_.set("PropertyName", CppMemberVariable.name());
                     CodeGenerator.PropertyEnd();
@@ -415,15 +397,12 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                     auto& CppEnum = static_cast<const cppast::cpp_enum&>(e);
                     auto& CppEnumUnderlyingType = static_cast<const cppast::cpp_builtin_type&>(CppEnum.underlying_type());
                     CodeGenerator.EnumBegin(CppEnum.name());
-                    //kainjow::mustache::data MetadataKVList{ kainjow::mustache::data::type::list };
-                    //for (auto CustomMetadata : CustomMetadatas)
-                    //{
-                    //    kainjow::mustache::data MetadataKV;
-                    //    MetadataKV.set("Key", CustomMetadata.first);
-                    //    MetadataKV.set("Value", CustomMetadata.second);
-                    //    MetadataKVList.push_back(MetadataKV);
-                    //}
-                    CodeGenerator.EnumStaticInitializer_.set("MetadataKVList", MakeTmplMetadataKVList(CustomMetadatas));
+                    for (auto Metadata : CustomMetadatas)
+                    {
+                        CodeGenerator.EnumStaticInitializerExpressionList_.push_back(
+                            "    Enum.AddMetadata(\"" + Metadata.first + "\", \"" + Metadata.second + "\");\n"
+                        );
+                    }
                     ContainerEntityExitCallback = [&] { CodeGenerator.EnumEnd(); };
                 }
             }
@@ -433,21 +412,17 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                 {
                     const std::string& EnumName = EnumNameData->string_value();
                     auto& CppEnumValue = static_cast<const cppast::cpp_enum_value&>(e);
-                    kainjow::mustache::data EnumKV;
-                    EnumKV.set("Value",  "static_cast<uint64_t>(" + EnumName + "::" + CppEnumValue.name() + ")");
-                    EnumKV.set("Name", CppEnumValue.name());
-                    CodeGenerator.EnumKVList_.push_back(EnumKV);
+                    CodeGenerator.EnumStaticInitializerExpressionList_.push_back(
+                        "    Enum.AddName(static_cast<uint64_t>(" + EnumName + "::" + CppEnumValue.name() + "), \"" + CppEnumValue.name() + "\");\n"
+                    );
                     auto It = CustomMetadatas.find("DisplayName");
                     if (It != CustomMetadatas.end())
                     {
-                        kainjow::mustache::data EnumDisplayName;
-                        EnumDisplayName.set("Value", "static_cast<uint64_t>(" + EnumName + "::" + CppEnumValue.name() + ")");
-                        EnumDisplayName.set("DisplayName", It->second);
-                        CodeGenerator.EnumDisplayNameList_.push_back(EnumDisplayName);
+                        CodeGenerator.EnumStaticInitializerExpressionList_.push_back(
+                            "    Enum.AddDisplayName(static_cast<uint64_t>(" + EnumName + "::" + CppEnumValue.name() + "), \"" + It->second + "\");\n"
+                        );
                     }
                 }
-            //literal_t,
-            // unexposed_t,
             }
             if (info.event == cppast::visitor_info::container_entity_enter)
             {
@@ -514,7 +489,7 @@ int main(int argc, char** argv) try
             "../../Tests/Source/Engine.h",
             "../../Tests/Source/TimerManager.h",
         };
-        ExportName = "Tests";
+        //ExportName = "Tests";
         CommandLines[0] = argv[0];
         ArgC = CommandLines.size();
         ArgV = (char**)CommandLines.data();
