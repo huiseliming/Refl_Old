@@ -1,5 +1,5 @@
 #pragma once
-#include "Metadata.h"
+#include "Record.h"
 #include "StaticType.h"
 
 class CType;
@@ -44,11 +44,11 @@ enum EPropertyFlag : uint64_t
 };
 
 
-class CProperty : public CReflRecord
+class CProperty : public CRecord
 {
 public:
     CProperty(const std::string& Name_)
-        : CReflRecord(Name_)
+        : CRecord(Name_)
         , Flag_(0)
         , AddressOffset_(0)
     {
@@ -270,6 +270,7 @@ public:
     virtual CType* GetType() override { return Class_; }
     virtual CClass* GetClass() override { return Class_; }
     void SetClass(CClass* Class) { Class_ = Class;};
+protected:
     CClass* Class_;
 };
 
@@ -282,6 +283,7 @@ public:
     virtual CType* GetType() override { return Enum_; }
     virtual CEnum* GetEnum() override { return Enum_; }
     void SetEnum(CEnum* Enum) { Enum_ = Enum; };
+protected:
     CEnum* Enum_;
 };
 

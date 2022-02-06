@@ -2,7 +2,7 @@
 #include <string>
 #include <cassert>
 #include <unordered_map>
-#include "MetadataExport.h"
+#include "ReflExport.h"
 
 #ifdef __METADATA__
 #define METADATA(...)  __attribute__((annotate("Metadata" __VA_OPT__(",") #__VA_ARGS__)))
@@ -42,17 +42,17 @@ static int64_t MetadataId;                 \
 //};
 
 
-class METADATA_API CReflRecord
+class REFL_API CRecord
 {
     friend class CMetadataManager;
 public:
-    CReflRecord(const std::string& Name)
+    CRecord(const std::string& Name)
         : Name_(Name)
     {
         //Metadatas.push_back(this);
         //Id_ = IdCounter++;
     }
-    virtual ~CReflRecord() = default;
+    virtual ~CRecord() = default;
 
     std::string GetMetadataValue(const std::string& Key)
     {
@@ -83,6 +83,5 @@ protected:
 
 private:
     static int64_t IdCounter;
-    static std::vector<CReflRecord*> Metadatas;
+    static std::vector<CRecord*> Metadatas;
 };
-

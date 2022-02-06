@@ -1,11 +1,11 @@
 #pragma once
 #include <vector>
 #include <memory>
-#include "Metadata.h"
+#include "Record.h"
 #include "Property.h"
 
 
-class METADATA_API CFunction : public CReflRecord
+class REFL_API CFunction : public CRecord
 {
 //public:
 //    CFunction(const std::string& name, void* ptr)

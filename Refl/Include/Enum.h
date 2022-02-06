@@ -19,7 +19,6 @@ public:
     uint64_t ToValue(const std::string& InName);
     std::set<uint64_t>& GetValues();
 
-
 private:
     std::set<uint64_t> Values_;
     std::unordered_map<uint64_t, std::vector<std::string>> ValueToName_;

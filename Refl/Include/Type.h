@@ -1,15 +1,15 @@
 #pragma once
 #include <functional>
-#include "Metadata.h"
+#include "Record.h"
 
 class CClass;
 class CEnum;
 
-class METADATA_API CType : public CReflRecord
+class REFL_API CType : public CRecord
 {
 public:
     CType(const std::string& InName, uint32_t InSize = 0)
-        : CReflRecord(InName)
+        : CRecord(InName)
         , Size_(InSize)
     {
     }

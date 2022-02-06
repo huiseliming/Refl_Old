@@ -37,19 +37,22 @@ add_executable(
     ${GeneratedSource}
     )
 
-target_link_libraries(Tests PUBLIC Metadata)
+target_link_libraries(Tests PUBLIC Refl)
+# for lib
+#target_include_directories(Tests PUBLIC
+#    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Include>
+#    $<INSTALL_INTERFACE:Include>    #${CMAKE_INSTALL_PREFIX}/include
+#    )
+#
+#include(GenerateExportHeader)
+#generate_export_header(Tests
+#    EXPORT_MACRO_NAME TESTS_API
+#    EXPORT_FILE_NAME ${CMAKE_CURRENT_SOURCE_DIR}/Include/TestsExport.h)
+#
+#message(" --database_dir ${CMAKE_BINARY_DIR} --std c++20 --export_name Tests --macro_definition __METADATA__ ${PublicHeader} ${PrivateHeader}")
 
-target_include_directories(Tests PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Include>
-    $<INSTALL_INTERFACE:Include>    #${CMAKE_INSTALL_PREFIX}/include
-    )
 
-include(GenerateExportHeader)
-generate_export_header(Metadata 
-    EXPORT_MACRO_NAME TESTS_API
-    EXPORT_FILE_NAME ${CMAKE_CURRENT_SOURCE_DIR}/Include/TestsExport.h)
-
-message(" --database_dir ${CMAKE_BINARY_DIR} --std c++20 --export_name Tests --macro_definition __METADATA__ ${PublicHeader} ${PrivateHeader}")
+message(" --database_dir ${CMAKE_BINARY_DIR} --std c++20 --macro_definition __METADATA__ ${PublicHeader} ${PrivateHeader}")
 
 foreach(InputHeader ${PublicHeader} ${PrivateHeader})
     list(APPEND InputHeaders ${InputHeader})
@@ -57,13 +60,18 @@ endforeach()
 
 add_custom_target(check_tests_generated_file
     ALL
-    COMMAND MetadataGenerator --database_dir ${CMAKE_BINARY_DIR} --std c++20 --export_name Tests --macro_definition __METADATA__ ${InputHeaders}
+    COMMAND ReflGenerator 
+    --database_dir ${CMAKE_BINARY_DIR} 
+    --std c++20 
+#    --export_name Tests 
+    --macro_definition __METADATA__ 
+    ${InputHeaders}
     DEPENDS ${InputHeaders}
     BYPRODUCTS ${GeneratedHeader} ${GeneratedSource}
     COMMENT "Checking the generated file for changes..."
     )
     
-add_dependencies(check_tests_generated_file MetadataGenerator)
+add_dependencies(check_tests_generated_file ReflGenerator)
 add_dependencies(Tests check_tests_generated_file)
 
 # add the command that invokes the reflection parser executablec

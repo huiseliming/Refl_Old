@@ -16,7 +16,7 @@ if(NOT PROJECT_NAME)
         message("VCPKG_TARGET_TRIPLET: " ${VCPKG_TARGET_TRIPLET})
     endif()
 
-    project(MetadataCpp LANGUAGES CXX C)
+    project(Refl LANGUAGES CXX C)
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
@@ -41,11 +41,11 @@ if(WIN32)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS OFF)
 endif()
 
-option(BuildMetadataCppTests "build MetadataCpp tests" ON)
+option(BuildMetadataCppTests "build Refl tests" ON)
 
 add_subdirectory(ThirdParty)
-add_subdirectory(Metadata)
-add_subdirectory(MetadataGenerator)
+add_subdirectory(Refl)
+add_subdirectory(ReflGenerator)
 if(BuildMetadataCppTests)
     add_subdirectory(Tests)
 endif()
