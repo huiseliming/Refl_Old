@@ -18,8 +18,8 @@ public:
 
     static std::unordered_map<std::string, CType*>& StaticTable();
     static std::unordered_map<std::string, CType*>& NameToType;
-    static std::list<std::function<void()>>& PostStaticInitializerList();
-    static void PostStaticInitializer();
+    static std::list<std::function<void()>>& PostStaticInitializerEventList();
+    static void ProcessPostStaticInitializerEvent();
 private:
     uint32_t Size_;
 };

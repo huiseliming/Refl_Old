@@ -31,6 +31,11 @@ enum class ENUM() ETestEnum2 : uint64_t
 	ENUM_ETestEnum2_GENERATED_BODY
 #endif // ENUM_ETestEnum2_GENERATED_BODY
 
+class CA{
+
+
+};
+
 class CLASS() CEngine
 {
 	GENERATED_BODY()
@@ -39,8 +44,8 @@ public:
 };
 
 //class CEngine;
-
-class CLASS(ClassName = "测试类") CTestMetadataClass
+ 
+class CLASS(ClassName = "测试类") CTestMetadataClass : public CEngine, CA
 {
 	GENERATED_BODY()
 public:

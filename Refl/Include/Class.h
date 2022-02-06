@@ -14,11 +14,17 @@ public:
         //Manager().RegisterType(this);
     }
 
+    void AddBase(CType* Base)
+    {
+        Bases_.push_back(Base);
+    }
+
     void AddProperty(CProperty* Property)
     {
         Propertie_.push_back(Property);
     }
 
+    std::vector<CType*>& GetBases() { return Bases_; }
     std::vector<CProperty*>& GetProperties() { return Propertie_; }
 
 private:

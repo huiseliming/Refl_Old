@@ -9,15 +9,15 @@ std::unordered_map<std::string, CType*>& CType::StaticTable()
     return Table;
 }
 
-std::list<std::function<void()>>& CType::PostStaticInitializerList()
+std::list<std::function<void()>>& CType::PostStaticInitializerEventList()
 {
     static std::list<std::function<void()>> StaticInitializerList;
     return StaticInitializerList;
 }
 
-void CType::PostStaticInitializer()
+void CType::ProcessPostStaticInitializerEvent()
 {
-    auto& PostStaticInitializerListRef = PostStaticInitializerList();
+    auto& PostStaticInitializerListRef = PostStaticInitializerEventList();
     auto ListIt = PostStaticInitializerListRef.begin();
     while (ListIt != PostStaticInitializerListRef.end())
     {

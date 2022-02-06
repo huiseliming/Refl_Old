@@ -307,6 +307,20 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                     auto& CppClass = static_cast<const cppast::cpp_class&>(e);
                     CodeGenerator.ClassBegin(CppClass.name());
                     CodeGenerator.ClassStaticInitializer_.set("MetadataKVList", MakeTmplMetadataKVList(CustomMetadatas));
+                    kainjow::mustache::data AddBaseList{ kainjow::mustache::data::type::list };
+                    for (auto It = CppClass.bases().begin(); CppClass.bases().end() != It; It++)
+                    {
+                        std::string BaseClassName = It->name();
+                        AddBaseList.push_back(
+                            "    CType::PostStaticInitializerEventList().push_back([&]{\n"
+                            "        if(CType::NameToType.contains(\"" + BaseClassName + "\"))\n"
+                            "           Cls.AddBase(reinterpret_cast<CClass*>(CType::NameToType[\"" + BaseClassName + "\"]));\n"
+                            "        else"
+                            "           Cls.AddBase(nullptr);\n"
+                            "    });\n"
+                        );
+                    }
+                    CodeGenerator.ClassStaticInitializer_.set("AddBaseList", AddBaseList);
                     ContainerEntityExitCallback = [&]{ CodeGenerator.ClassEnd(); };
                     //CType* Type = CodeGenerator.RequiredMetadata<CType>(e.name());
                     //CodeGenerator.PushMetadata(StaticClass<CType>());
@@ -341,7 +355,7 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                                 if (VectorElementPropertyInfo.PropertyFlag & EPF_ClassFlag)
                                 {
                                     VectorElementPropertyInitializerFunctionData.set("CustomExpression",
-                                        "    CType::PostStaticInitializerList().push_back([&]{\n"
+                                        "    CType::PostStaticInitializerEventList().push_back([&]{\n"
                                         "        assert(CType::NameToType.contains(\"" + VectorElementPropertyInfo.PropertyClassName + "\"));\n"
                                         "        Prop.SetClass(reinterpret_cast<CClass*>(CType::NameToType[\"" + VectorElementPropertyInfo.PropertyClassName + "\"]));\n"
                                         "    });\n"
@@ -373,7 +387,7 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                     if (PropertyInfo.PropertyFlag & EPF_ClassFlag)
                     {
                         PropertyInitializerFunctionData.set("CustomExpression",
-                            "    CType::PostStaticInitializerList().push_back([&]{\n"
+                            "    CType::PostStaticInitializerEventList().push_back([&]{\n"
                             "        assert(CType::NameToType.contains(\"" + PropertyInfo.PropertyClassName + "\"));\n"
                             "        Prop.SetClass(reinterpret_cast<CClass*>(CType::NameToType[\"" + PropertyInfo.PropertyClassName + "\"]));\n"
                             "    });\n"
