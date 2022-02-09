@@ -305,80 +305,65 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                     auto& PropertyData = CodeGenerator.PropertyBegin(CppMemberVariable.name());
                     auto& CppMemberVariableType = CppMemberVariable.type();
                     const cppast::cpp_type* TypePtr = &CppMemberVariableType;
-                    if (TypePtr->kind() == cppast::cpp_type_kind::template_instantiation_t)
-                    {
-                        auto& CppMemberVariableTemplateInstantiationType = static_cast<const cppast::cpp_template_instantiation_type&>(*TypePtr);
-                        if (CppMemberVariableTemplateInstantiationType.primary_template().name() == "std::vector")
-                        {
-                            if (CppMemberVariableTemplateInstantiationType.arguments_exposed())
-                            {
-                                auto TemplateArgment = CppMemberVariableTemplateInstantiationType.arguments();
-                                auto size = TemplateArgment.value().size();
-                                //CCodeGenerator::Instance().PropertyInitializer_.set("PropertyTypeClass", "CVectorProperty");
-                                auto& CppMemberVariableVectorType = CppMemberVariableTemplateInstantiationType.arguments().value().begin()->type().value();
-                                CPropertyInfo VectorElementPropertyInfo = ParseCppTypeToPropertyInfo(EntityIndex, CppMemberVariableVectorType);
-                                kainjow::mustache::mustache VectorElementPropertyInitializerFunctionTmpl(GeneratedTemplates::PropertyInitializerFunctionTemplate);
-                                kainjow::mustache::data VectorElementPropertyInitializerFunctionData;
-                                kainjow::mustache::data VectorElementPropertyInitializerFunctionDataExpressionList{ kainjow::mustache::data::type::list };
-                                VectorElementPropertyInitializerFunctionData.set("ClassName", ClassName);
-                                VectorElementPropertyInitializerFunctionData.set("PropertyName", CppMemberVariable.name() + "__VectorElement");
-                                VectorElementPropertyInitializerFunctionData.set("PropertyTypeClass", ToPropertyTypeName(VectorElementPropertyInfo.PropertyFlag));
-                                VectorElementPropertyInitializerFunctionData.set("PropertyAddressOffset", "0");
-                                VectorElementPropertyInitializerFunctionData.set("PropertyFlags", fmt::format("{:#x}", VectorElementPropertyInfo.PropertyFlag));
-                                if (VectorElementPropertyInfo.PropertyFlag & EPF_ClassFlag)
-                                {
-                                    VectorElementPropertyInitializerFunctionDataExpressionList.push_back(
-                                        "    CType::PostStaticInitializerEventList().push_back([&]{\n"
-                                        "        assert(CType::NameToType.contains(\"" + VectorElementPropertyInfo.PropertyClassName + "\"));\n"
-                                        "        Prop.SetClass(reinterpret_cast<CClass*>(CType::NameToType[\"" + VectorElementPropertyInfo.PropertyClassName + "\"]));\n"
-                                        "    });\n"
-                                    );
-                                }
-                                VectorElementPropertyInitializerFunctionData.set("ExpressionList", VectorElementPropertyInitializerFunctionDataExpressionList);
-                                CodeGenerator.GlobalExpressionList_.push_back(VectorElementPropertyInitializerFunctionTmpl.render(VectorElementPropertyInitializerFunctionData));
-                                PropertyInfo.PropertyFlag |= EPF_VectorFlag;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        PropertyInfo = ParseCppTypeToPropertyInfo(EntityIndex, CppMemberVariableType);
-                    }
-                    if (!(PropertyInfo.PropertyFlag & EPF_TypeFlagBits))
-                    {
-                        PropertyInfo.PropertyFlag |= EPF_UnknowFlag;
-                    }
-                    kainjow::mustache::mustache PropertyStaticInitializerTmpl(GeneratedTemplates::PropertyInitializerFunctionTemplate);
-                    kainjow::mustache::data PropertyStaticInitializerData;
-                    kainjow::mustache::data PropertyStaticInitializerDataExpressionList{ kainjow::mustache::data::type::list };
-                    PropertyStaticInitializerData.set("ClassName", ClassName);
-                    PropertyStaticInitializerData.set("PropertyName", CppMemberVariable.name());
-                    PropertyStaticInitializerData.set("PropertyTypeClass", ToPropertyTypeName(PropertyInfo.PropertyFlag));
-                    PropertyStaticInitializerData.set("PropertyAddressOffset", fmt::format("offsetof({}, {}::{})", ClassName, ClassName, CppMemberVariable.name()));
-                    PropertyStaticInitializerData.set("PropertyFlags", fmt::format("{:#x}", PropertyInfo.PropertyFlag));
-                    for (auto Metadata : CustomMetadatas)
-                    {
-                        PropertyStaticInitializerDataExpressionList.push_back(
-                            "    Prop.AddMetadata(\"" + Metadata.first + "\", \"" + Metadata.second + "\");\n"
-                        );
-                    }
-                    if (PropertyInfo.PropertyFlag & EPF_ClassFlag)
-                    {
-                        PropertyStaticInitializerDataExpressionList.push_back(
-                            "    CType::PostStaticInitializerEventList().push_back([&]{\n"
-                            "        assert(CType::NameToType.contains(\"" + PropertyInfo.PropertyClassName + "\"));\n"
-                            "        Prop.SetClass(reinterpret_cast<CClass*>(CType::NameToType[\"" + PropertyInfo.PropertyClassName + "\"]));\n"
-                            "    });\n"
-                        );
-                    }
-                    else if (PropertyInfo.PropertyFlag & EPF_VectorFlag)
-                    {
-                        PropertyStaticInitializerDataExpressionList.push_back(
-                            "    Prop.SetDataProperty(CLS_" + ClassName + "__PROP_" + CppMemberVariable.name() + "__VectorElement__STATIC_INITIALIZER());\n"
-                        );
-                    }
-                    PropertyStaticInitializerData.set("ExpressionList", PropertyStaticInitializerDataExpressionList);
-                    CodeGenerator.GlobalExpressionList_.push_back(PropertyStaticInitializerTmpl.render(PropertyStaticInitializerData));
+                    //if (TypePtr->kind() == cppast::cpp_type_kind::template_instantiation_t)
+                    //{
+                    //    auto& CppMemberVariableTemplateInstantiationType = static_cast<const cppast::cpp_template_instantiation_type&>(*TypePtr);
+                    //    if (CppMemberVariableTemplateInstantiationType.primary_template().name() == "std::vector")
+                    //    {
+                    //        if (CppMemberVariableTemplateInstantiationType.arguments_exposed())
+                    //        {
+                    //            auto TemplateArgment = CppMemberVariableTemplateInstantiationType.arguments();
+                    //            auto size = TemplateArgment.value().size();
+                    //            //CCodeGenerator::Instance().PropertyInitializer_.set("PropertyTypeClass", "CVectorProperty");
+                    //            auto& CppMemberVariableVectorType = CppMemberVariableTemplateInstantiationType.arguments().value().begin()->type().value();
+                    //            CPropertyInfo VectorElementPropertyInfo = ParseCppTypeToPropertyInfo(EntityIndex, CppMemberVariableVectorType);
+                    //            std::string PropertyClassName;
+                    //            std::string VectorSubPropertyFunctionName;
+                    //            if (PropertyInfo.PropertyFlag & EPF_ClassFlag)
+                    //            {
+                    //                PropertyClassName = PropertyInfo.PropertyClassName;
+                    //            }
+                    //            else if (PropertyInfo.PropertyFlag & EPF_VectorFlag)
+                    //            {
+                    //                VectorSubPropertyFunctionName = "CLS_" + ClassName + "__PROP_" + CppMemberVariable.name() + "__VectorElement__STATIC_INITIALIZER";
+                    //            }
+                    //            CodeGenerator.GlobalExpressionList_.push_back(
+                    //                GeneratePropertyStaticInitializerFunctionCode(
+                    //                    "CLS_" + ClassName + "__PROP_" + CppMemberVariable.name() + "__VectorElement__STATIC_INITIALIZER",
+                    //                    CppMemberVariable.name() + "__VectorElement",
+                    //                    VectorElementPropertyInfo.PropertyFlag,
+                    //                    fmt::format("offsetof({}, {}::{})", ClassName, ClassName, CppMemberVariable.name()),
+                    //                    {} 
+                    //                )
+                    //            );
+                    //            //VectorElementPropertyInitializerFunctionData.set("ExpressionList", VectorElementPropertyInitializerFunctionDataExpressionList);
+                    //            //CodeGenerator.GlobalExpressionList_.push_back(VectorElementPropertyInitializerFunctionTmpl.render(VectorElementPropertyInitializerFunctionData));
+                    //            PropertyInfo.PropertyFlag |= EPF_VectorFlag;
+                    //        }
+                    //    }
+                    //}
+                    //else
+                    //{
+                    //    PropertyInfo = ParseCppTypeToPropertyInfo(EntityIndex, CppMemberVariableType);
+                    //}
+                    //if (!(PropertyInfo.PropertyFlag & EPF_TypeFlagBits))
+                    //{
+                    //    PropertyInfo.PropertyFlag |= EPF_UnknowFlag;
+                    //}
+
+                    //std::string PropertyClassName;
+                    //std::string VectorSubPropertyFunctionName;
+                    //if (PropertyInfo.PropertyFlag & EPF_ClassFlag)
+                    //{
+                    //    PropertyClassName = PropertyInfo.PropertyClassName;
+                    //}
+                    //else if (PropertyInfo.PropertyFlag & EPF_VectorFlag)
+                    //{
+                    //    VectorSubPropertyFunctionName = "CLS_" + ClassName + "__PROP_" + CppMemberVariable.name() + "__VectorElement__STATIC_INITIALIZER";
+                    //}
+                    CodeGenerator.GlobalExpressionList_.push_back(
+                        ParseCppTypeToPropertyStaticInitializerCode(EntityIndex, CppMemberVariableType, ClassName, CppMemberVariable.name(), CustomMetadatas)
+                    );
                     CodeGenerator.ClassStaticInitializerExpressionList_.push_back(
                         "    Cls.AddProperty(CLS_" + ClassName + "__PROP_" + CppMemberVariable.name() + "__STATIC_INITIALIZER());\n"
                     );
@@ -388,8 +373,57 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                 }
                 else if (e.kind() == cppast::cpp_entity_kind::member_function_t)
                 {
+                    std::string ClassName = CodeGenerator.ClassStaticInitializer_.get("ClassName")->string_value();
                     auto& CppMemberFunction = static_cast<const cppast::cpp_member_function&>(e);
                     CodeGenerator.FunctionBegin(CppMemberFunction.name());
+                    std::string FrameStrust = ClassName + "_" + CppMemberFunction.name() + "_FRAME_STRUCT";
+                    std::string FrameStructInputs;
+                    std::string FrameStructOutput;
+                    kainjow::mustache::mustache PropertyInitializerFunctionTmpl(GeneratedTemplates::ReflFunctionCallTemplate);
+                    kainjow::mustache::data PropertyInitializerFunctionData;
+                    kainjow::mustache::data ExpressionList{ kainjow::mustache::data::type::list };
+                    kainjow::mustache::data FrameStructMemberList{ kainjow::mustache::data::type::list };
+                    kainjow::mustache::data ReflFunctionGlobalExpressionList{ kainjow::mustache::data::type::list };
+                    int32_t DefaultParametersIndex = 0;
+                    for (auto It = CppMemberFunction.parameters().begin(); It != CppMemberFunction.parameters().end(); It++)
+                    {
+                        std::string ParameterName = It->name() != "" ? It->name() : "__" + std::to_string(DefaultParametersIndex) + "__";
+                        ReflFunctionGlobalExpressionList.push_back(
+                            ParseCppTypeToPropertyStaticInitializerCode(EntityIndex, It->type(), FrameStrust, It->name(), {})
+                        );
+                        std::string TypeDeclName = ParseCppTypeToSpellString(It->type());
+                        std::for_each(TypeDeclName.begin(), TypeDeclName.end(), [] (char& c) { if(c == '&') c = '*'; });
+                        FrameStructMemberList.push_back(TypeDeclName + " " + ParameterName);
+                        FrameStructInputs += (It->type().kind() == cppast::cpp_type_kind::reference_t ? "*FS." : "FS.") + ParameterName + ",";
+                        ExpressionList.push_back(
+                            "Func.AddArgument(CLS_" + FrameStrust + "__PROP_" + It->name() + "__STATIC_INITIALIZER());\n"
+                        );
+                        DefaultParametersIndex++;
+                    }
+                    if (FrameStructInputs[FrameStructInputs.size() - 1] == ',')
+                    {
+                        FrameStructInputs.resize(FrameStructInputs.size() - 1);
+                    }
+                    ReflFunctionGlobalExpressionList.push_back(
+                        ParseCppTypeToPropertyStaticInitializerCode(EntityIndex, CppMemberFunction.return_type(), FrameStrust, "__R__", {})
+                    );
+                    ExpressionList.push_back(
+                        "Func.SetReturnValue(CLS_" + FrameStrust + "__PROP___R____STATIC_INITIALIZER());\n"
+                    );
+                    PropertyInitializerFunctionData.set("ClassName", ClassName);
+                    PropertyInitializerFunctionData.set("FunctionName", CppMemberFunction.name());
+                    PropertyInitializerFunctionData.set("ReturnType", "int");
+                    PropertyInitializerFunctionData.set("FrameStructInputs", FrameStructInputs);
+                    PropertyInitializerFunctionData.set("FrameStructOutput", FrameStructOutput);
+                    PropertyInitializerFunctionData.set("ExpressionList", ExpressionList);
+                    PropertyInitializerFunctionData.set("FrameStructMemberList", FrameStructMemberList);
+                    PropertyInitializerFunctionData.set("ReflFunctionGlobalExpressionList", ReflFunctionGlobalExpressionList);
+                    CodeGenerator.GlobalExpressionList_.push_back(
+                        PropertyInitializerFunctionTmpl.render(PropertyInitializerFunctionData)
+                    );
+                    CodeGenerator.ClassStaticInitializerExpressionList_.push_back(
+                        "    Cls.AddFunction(CLS_" + ClassName + "__FUNC_" + CppMemberFunction.name() + "__STATIC_INITIALIZER());\n"
+                    );
                     ContainerEntityExitCallback = [&] { CodeGenerator.FunctionEnd(); };
                 }
                 else if (e.kind() == cppast::cpp_entity_kind::enum_t)

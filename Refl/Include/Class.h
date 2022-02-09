@@ -24,6 +24,11 @@ public:
         Propertie_.push_back(Property);
     }
 
+    void AddFunction(CFunction* Function)
+    {
+        Functions_.push_back(Function);
+    }
+
     std::vector<CType*>& GetBases() { return Bases_; }
     std::vector<CProperty*>& GetProperties() { return Propertie_; }
 

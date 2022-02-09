@@ -5,7 +5,8 @@
 
 CPropertyInfo ParseCppTypeToPropertyInfo(const cppast::cpp_entity_index& EntityIndex, const cppast::cpp_type& CppType)
 {
-    CPropertyInfo PropertyInfo;
+    CPropertyInfo PropertyInfo = {};
+    std::string PtrOrRefString, CVQualifiedString;
     PropertyInfo.PropertyFlag = 0;
     const cppast::cpp_type* CppTypePtr = &CppType;
     if (CppTypePtr->kind() == cppast::cpp_type_kind::pointer_t)
@@ -13,12 +14,14 @@ CPropertyInfo ParseCppTypeToPropertyInfo(const cppast::cpp_entity_index& EntityI
         auto CppMemberVariablePointerType = static_cast<const cppast::cpp_pointer_type*>(CppTypePtr);
         CppTypePtr = &CppMemberVariablePointerType->pointee();
         PropertyInfo.PropertyFlag |= EPF_PointerFlag;
+        PropertyInfo.Spelling += "*";
     }
     if (CppTypePtr->kind() == cppast::cpp_type_kind::reference_t)
     {
         auto CppMemberVariableReferenceType = static_cast<const cppast::cpp_reference_type*>(CppTypePtr);
         CppTypePtr = &CppMemberVariableReferenceType->referee();
         PropertyInfo.PropertyFlag |= EPF_ReferenceFlag;
+        PropertyInfo.Spelling += "&";
     }
     if (CppTypePtr->kind() == cppast::cpp_type_kind::cv_qualified_t)
     {
@@ -29,6 +32,7 @@ CPropertyInfo ParseCppTypeToPropertyInfo(const cppast::cpp_entity_index& EntityI
         {
         case cppast::cpp_cv_const:
             PropertyInfo.PropertyFlag |= EPF_ConstFlag;
+            PropertyInfo.Spelling = "const " + PropertyInfo.Spelling;
             break;
         case cppast::cpp_cv_volatile:
             PropertyInfo.PropertyFlag |= EPF_VolatileFlag;
@@ -45,6 +49,7 @@ CPropertyInfo ParseCppTypeToPropertyInfo(const cppast::cpp_entity_index& EntityI
     {
         auto& CppMemberVariableBuiltinType = static_cast<const cppast::cpp_builtin_type&>(*CppTypePtr);
         PropertyInfo.PropertyFlag |= MakeBuiltinTypeFlags(CppMemberVariableBuiltinType.builtin_type_kind());
+        PropertyInfo.Spelling = cppast::to_string(CppMemberVariableBuiltinType.builtin_type_kind());
     }
     else if (CppTypePtr->kind() == cppast::cpp_type_kind::user_defined_t)
     {
@@ -83,6 +88,8 @@ CPropertyInfo ParseCppTypeToPropertyInfo(const cppast::cpp_entity_index& EntityI
                 }
             }
         }
+        PropertyInfo.Spelling = CppMemberVariableUserDefinedTypeName;
     }
+    PropertyInfo.Spelling = CVQualifiedString + " " + PropertyInfo.Spelling + PtrOrRefString;
     return PropertyInfo;
 }

@@ -25,7 +25,7 @@ const char* HeaderTemplate =
 
 
 const char* PropertyInitializerFunctionTemplate =
-"static CProperty* CLS_{{ClassName}}__PROP_{{PropertyName}}__STATIC_INITIALIZER()\n"
+"static CProperty* {{PropertyStaticInitializerFunctionName}}()\n"
 "{\n"
 "    static {{PropertyTypeClass}} Prop(\"{{{PropertyName}}}\");\n"
 "    Prop.SetAddressOffset({{PropertyAddressOffset}});\n"
@@ -34,6 +34,40 @@ const char* PropertyInitializerFunctionTemplate =
 "{{{.}}}"
 "{{/ExpressionList}}"
 "    return &Prop;\n"
+"}\n"
+"\n"
+;
+
+const char* ReflFunctionCallTemplate =
+"struct {{ClassName}}_{{FunctionName}}_FRAME_STRUCT {\n"
+"{{#FrameStructMemberList}}"
+"    {{{.}}};\n"
+"{{/FrameStructMemberList}}"
+"    {{ReturnType}} __R__;\n"
+"};\n"
+"\n"
+"{{#ReflFunctionGlobalExpressionList}}"
+"{{{.}}}"
+"{{/ReflFunctionGlobalExpressionList}}"
+"\n"
+
+"static void CLS_{{ClassName}}__FUNC_{{FunctionName}}__REFL_INVOKE(void* InputObj, void* Frame)\n"
+"{\n"
+"    {{ClassName}}* Obj = reinterpret_cast<{{ClassName}}*>(InputObj);\n"
+"    {{ClassName}}_{{FunctionName}}_FRAME_STRUCT FS;\n"
+"    FS.__R__ = Obj->{{FunctionName}}({{FrameStructInputs}});\n"
+"}\n"
+"\n"
+"static CFunction* CLS_{{ClassName}}__FUNC_{{FunctionName}}__STATIC_INITIALIZER()\n"
+"{\n"
+"    static CFunction Func(\"{{{FunctionName}}}\");\n"
+"    Func.SetReflInvokePtr(&CLS_{{ClassName}}__FUNC_{{FunctionName}}__REFL_INVOKE);\n"
+"    Func.SetRowInvokePtr(ForceCast<decltype(&{{ClassName}}::{{FunctionName}}), void*>(&{{ClassName}}::{{FunctionName}}));\n"
+"    Func.SetFrameSize(sizeof({{ClassName}}_{{FunctionName}}_FRAME_STRUCT));\n"
+"{{#ExpressionList}}"
+"    {{{.}}}"
+"{{/ExpressionList}}"
+"    return &Func;\n"
 "}\n"
 "\n"
 ;
@@ -69,9 +103,6 @@ const char* SourceTemplate =
 "TAutoInitializer<{{ClassName}}> CLS_{{ClassName}}_AUTO_INITIALIZER;\n"
 "\n"
 "{{/ClassStaticInitializerList}}"
-
-
-
 "{{#EnumStaticInitializerList}}"
 "CEnum* TEnum<{{EnumName}}>::StaticEnum()\n"
 "{\n"

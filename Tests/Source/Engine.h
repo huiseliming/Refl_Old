@@ -41,14 +41,13 @@ class CLASS() CEngine
 	GENERATED_BODY()
 public:
 	CTimerManager TimerManager;
+	int32_t A;
 };
 
-//class CEngine;
- 
 class CLASS(ClassName = "测试类") CTestMetadataClass : public CEngine, CA
 {
 	GENERATED_BODY()
-public:
+public: 
 	//PROPERTY()
 	//bool TestBoolProperty;
 	//PROPERTY()
@@ -80,7 +79,11 @@ public:
 
 	PROPERTY((ClassName = "测试属性EnginePtrVector"))
 	std::vector<CEngine*> TestEnginePtrVectorProperty;
-
+	FUNCTION()
+	int TestFunction(std::vector<const volatile int*> ASD, std::vector<CEngine*> ASD1, std::vector<const volatile CEngine*> ASD2, CEngine& ASD3)
+	{
+		return 1;
+	}
 	//PROPERTY()
 	//const volatile int32_t& TestCVPtrProperty;
 	//PROPERTY()

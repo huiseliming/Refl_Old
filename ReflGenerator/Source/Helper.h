@@ -18,4 +18,41 @@ std::string GetOuputSourceFileFullPath(std::string InputFileFullPath);
 std::string FormatCustomMetadata(const std::string& CustomMetadata);
 
 kainjow::mustache::data MakeTmplMetadataKVList(std::unordered_map<std::string, std::string> MetadataMap);
+
+
+std::string ParseMemberVariableCppTypeToPropertyStaticInitializerCode(
+    const cppast::cpp_entity_index& EntityIndex, 
+    const cppast::cpp_type& Type, 
+    const std::string& ClassName, 
+    const std::string& PropertyName,
+    const std::unordered_map<std::string, std::string>& PropertyMetadatas);
+
+std::string ParseMemberFunctionCppTypeToPropertyStaticInitializerCode(
+    const cppast::cpp_entity_index& EntityIndex,
+    const cppast::cpp_type& Type,
+    const std::string& ClassName,
+    const std::string& PropertyName,
+    const std::unordered_map<std::string, std::string>& PropertyMetadatas);
+
+std::string ParseCppTypeToPropertyStaticInitializerCode(
+    const cppast::cpp_entity_index& EntityIndex,
+    const cppast::cpp_type& Type,
+    const std::string& ClassName,
+    const std::string& PropertyName,
+    const std::unordered_map<std::string, std::string>& PropertyMetadatas);
+
+std::string GeneratePropertyStaticInitializerFunctionCode(
+    const std::string& StaticInitializerFunctionName, 
+    const std::string& PropertyName, 
+    uint64_t PropertyFlag, 
+    const std::string& PropertyAddressOffset,
+    const std::unordered_map<std::string, std::string>& PropertyMetadatas,
+    const std::string& PropertyClassName = {},
+    const std::string& VectorSubPropertyFunctionName = {}
+);
+
+std::string ParseCppTypeToSpellString(const cppast::cpp_type& CppType, bool bIsRemoveCV = true);
+
+bool IsRefType(const cppast::cpp_type& CppType);
+
 //GetLastWriteTime

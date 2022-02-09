@@ -1,7 +1,11 @@
 #include "Helper.h"
 #include <memory>
+#include <fmt/format.h>
 #include <fstream>
 #include "Property.h"
+#include "GeneratedTemplates.h"
+#include "Parser.h"
+#include <cppast/cpp_template.hpp>
 
 #define CONST_STRING(A, B) static std::string A = #B
 
@@ -258,3 +262,204 @@ kainjow::mustache::data MakeTmplMetadataKVList(std::unordered_map<std::string, s
 	}
 	return MetadataKVList;
 }
+
+std::string ParseMemberVariableCppTypeToPropertyStaticInitializerCode(const cppast::cpp_entity_index& EntityIndex, const cppast::cpp_type& Type, const std::string& ClassName, const std::string& PropertyName, const std::unordered_map<std::string, std::string>& PropertyMetadatas)
+{
+	return std::string();
+}
+
+std::string ParseMemberFunctionCppTypeToPropertyStaticInitializerCode(const cppast::cpp_entity_index& EntityIndex, const cppast::cpp_type& Type, const std::string& ClassName, const std::string& PropertyName, const std::unordered_map<std::string, std::string>& PropertyMetadatas)
+{
+	return std::string();
+}
+
+std::string ParseCppTypeToPropertyStaticInitializerCode(
+	const cppast::cpp_entity_index& EntityIndex, 
+	const cppast::cpp_type& Type, 
+	const std::string& ClassName, 
+	const std::string& PropertyName, 
+	const std::unordered_map<std::string, std::string>& PropertyMetadatas)
+{
+	const cppast::cpp_type* TypePtr = &Type;
+	std::string PropertyStaticInitializerCode;
+	CPropertyInfo PropertyInfo = {};
+	if (TypePtr->kind() == cppast::cpp_type_kind::template_instantiation_t)
+	{
+		auto& CppMemberVariableTemplateInstantiationType = static_cast<const cppast::cpp_template_instantiation_type&>(*TypePtr);
+		if (CppMemberVariableTemplateInstantiationType.primary_template().name() == "std::vector")
+		{
+			if (CppMemberVariableTemplateInstantiationType.arguments_exposed())
+			{
+				auto TemplateArgment = CppMemberVariableTemplateInstantiationType.arguments();
+				auto size = TemplateArgment.value().size();
+				//CCodeGenerator::Instance().PropertyInitializer_.set("PropertyTypeClass", "CVectorProperty");
+				auto& CppMemberVariableVectorType = CppMemberVariableTemplateInstantiationType.arguments().value().begin()->type().value();
+				CPropertyInfo VectorElementPropertyInfo = ParseCppTypeToPropertyInfo(EntityIndex, CppMemberVariableVectorType);
+				std::string PropertyClassName;
+				std::string VectorSubPropertyFunctionName;
+				if (VectorElementPropertyInfo.PropertyFlag & EPF_ClassFlag)
+				{
+					PropertyClassName = VectorElementPropertyInfo.PropertyClassName;
+				}
+				//else if (PropertyInfo.PropertyFlag & EPF_VectorFlag)
+				//{
+				//	VectorSubPropertyFunctionName = "CLS_" + ClassName + "__PROP_" + PropertyName + "__VectorElement__STATIC_INITIALIZER";
+				//}
+				PropertyStaticInitializerCode += 
+					GeneratePropertyStaticInitializerFunctionCode(
+						"CLS_" + ClassName + "__PROP_" + PropertyName + "__VectorElement__STATIC_INITIALIZER",
+						PropertyName + "__VectorElement",
+						VectorElementPropertyInfo.PropertyFlag,
+						fmt::format("offsetof({}, {}::{})", ClassName, ClassName, PropertyName),
+						{},
+						PropertyClassName
+					);
+			}
+		}
+	}
+	else
+	{
+		PropertyInfo = ParseCppTypeToPropertyInfo(EntityIndex, Type);
+	}
+	if (!(PropertyInfo.PropertyFlag & EPF_TypeFlagBits))
+	{
+		PropertyInfo.PropertyFlag |= EPF_UnknowFlag;
+	}
+
+	std::string PropertyClassName;
+	std::string VectorSubPropertyFunctionName;
+	if (PropertyInfo.PropertyFlag & EPF_ClassFlag)
+	{
+		PropertyClassName = PropertyInfo.PropertyClassName;
+	}
+	else if (PropertyInfo.PropertyFlag & EPF_VectorFlag)
+	{
+		VectorSubPropertyFunctionName = "CLS_" + ClassName + "__PROP_" + PropertyName + "__VectorElement__STATIC_INITIALIZER";
+	}
+	PropertyStaticInitializerCode +=
+		GeneratePropertyStaticInitializerFunctionCode(
+			"CLS_" + ClassName + "__PROP_" + PropertyName + "__STATIC_INITIALIZER",
+			PropertyName,
+			PropertyInfo.PropertyFlag,
+			fmt::format("offsetof({}, {}::{})", ClassName, ClassName, PropertyName),
+			PropertyMetadatas,
+			PropertyClassName,
+			VectorSubPropertyFunctionName
+		);
+	return PropertyStaticInitializerCode;
+}
+
+std::string GeneratePropertyStaticInitializerFunctionCode(
+	const std::string& StaticInitializerFunctionName,
+	const std::string& PropertyName,
+	uint64_t PropertyFlag,
+	const std::string& PropertyAddressOffset,
+	const std::unordered_map<std::string, std::string>& PropertyMetadatas,
+	const std::string& PropertyClassName,
+	const std::string& VectorSubPropertyFunctionName
+)
+{
+	kainjow::mustache::mustache PropertyInitializerFunctionTmpl(GeneratedTemplates::PropertyInitializerFunctionTemplate);
+	kainjow::mustache::data PropertyInitializerFunctionData;
+	kainjow::mustache::data ExpressionList{ kainjow::mustache::data::type::list };
+	PropertyInitializerFunctionData.set("PropertyStaticInitializerFunctionName", StaticInitializerFunctionName);
+	PropertyInitializerFunctionData.set("PropertyName", PropertyName);
+	PropertyInitializerFunctionData.set("PropertyAddressOffset", PropertyAddressOffset);
+	PropertyInitializerFunctionData.set("PropertyTypeClass", ToPropertyTypeName(PropertyFlag));
+	PropertyInitializerFunctionData.set("PropertyFlags", fmt::format("{:#x}", PropertyFlag));
+	for (auto Metadata : PropertyMetadatas)
+	{
+		ExpressionList.push_back(
+			"    Prop.AddMetadata(\"" + Metadata.first + "\", \"" + Metadata.second + "\");\n"
+		);
+	}
+	if (PropertyFlag & EPF_ClassFlag)
+	{
+		ExpressionList.push_back(
+			"    CType::PostStaticInitializerEventList().push_back([&]{\n"
+			"        assert(CType::NameToType.contains(\"" + PropertyClassName + "\"));\n"
+			"        Prop.SetClass(reinterpret_cast<CClass*>(CType::NameToType[\"" + PropertyClassName + "\"]));\n"
+			"    });\n"
+		);
+	}
+	else if (PropertyFlag & EPF_VectorFlag)
+	{
+		ExpressionList.push_back(
+			"    Prop.SetDataProperty(" + VectorSubPropertyFunctionName + "());\n"
+		);
+	}
+	PropertyInitializerFunctionData.set("ExpressionList", ExpressionList);
+	return PropertyInitializerFunctionTmpl.render(PropertyInitializerFunctionData);
+}
+
+std::string ParseCppTypeToSpellString(const cppast::cpp_type& CppType, bool bIsRemoveCV)
+{
+	std::string PtrOrRefString, TypeNameString, CVQualifiedString;
+	const cppast::cpp_type* CppTypePtr = &CppType;
+	if (CppTypePtr->kind() == cppast::cpp_type_kind::pointer_t)
+	{
+		auto CppPointerType = static_cast<const cppast::cpp_pointer_type*>(CppTypePtr);
+		CppTypePtr = &CppPointerType->pointee();
+		PtrOrRefString += "*";
+	}
+	if (CppTypePtr->kind() == cppast::cpp_type_kind::reference_t)
+	{
+		auto CppReferenceType = static_cast<const cppast::cpp_reference_type*>(CppTypePtr);
+		CppTypePtr = &CppReferenceType->referee();
+		PtrOrRefString += "&";
+	}
+	if (CppTypePtr->kind() == cppast::cpp_type_kind::cv_qualified_t)
+	{
+		auto CppCVQualifiedType = static_cast<const cppast::cpp_cv_qualified_type*>(CppTypePtr);
+		CppTypePtr = &CppCVQualifiedType->type();
+		if (!bIsRemoveCV)
+		{
+			auto CVQualifier = CppCVQualifiedType->cv_qualifier();
+			switch (CVQualifier)
+			{
+			case cppast::cpp_cv_const:
+				CVQualifiedString = "const";
+				break;
+			case cppast::cpp_cv_volatile:
+				CVQualifiedString = "volatile";
+				break;
+			case cppast::cpp_cv_const_volatile:
+				CVQualifiedString = "const volatile";
+				break;
+			case cppast::cpp_cv_none:
+			default:
+				break;
+			}
+		}
+	}
+	if (CppTypePtr->kind() == cppast::cpp_type_kind::builtin_t)
+	{
+		auto& CppBuiltinType = static_cast<const cppast::cpp_builtin_type&>(*CppTypePtr);
+		TypeNameString = cppast::to_string(CppBuiltinType.builtin_type_kind());
+	}
+	else if (CppTypePtr->kind() == cppast::cpp_type_kind::user_defined_t)
+	{
+		auto& CppUserDefinedType = static_cast<const cppast::cpp_user_defined_type&>(*CppTypePtr);
+		TypeNameString = CppUserDefinedType.entity().name();
+	}
+	else if (CppTypePtr->kind() == cppast::cpp_type_kind::template_instantiation_t)
+	{
+		auto& CppTemplateInstantiationType = static_cast<const cppast::cpp_template_instantiation_type&>(*CppTypePtr);
+		if (CppTemplateInstantiationType.primary_template().name() == "std::vector")
+		{
+			auto& CppVectorElementType = CppTemplateInstantiationType.arguments().value().begin()->type().value();
+			TypeNameString = "std::vector<" + ParseCppTypeToSpellString(CppVectorElementType, false) + ">";
+		}
+	}
+	return CVQualifiedString + (CVQualifiedString.empty() ? "" : " ") + TypeNameString + PtrOrRefString;
+}
+
+bool IsRefType(const cppast::cpp_type& CppType)
+{
+	if (CppType.kind() == cppast::cpp_type_kind::reference_t)
+	{
+		return true;
+	}
+	return false;
+}
+

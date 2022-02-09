@@ -4,14 +4,42 @@
 #include "Record.h"
 #include "Property.h"
 
+typedef void (*FPReflInvoke)(void*, void*);
+
 
 class REFL_API CFunction : public CRecord
 {
-//public:
-//    CFunction(const std::string& name, void* ptr)
-//        : CMetadata(name)
-//        , Ptr(ptr)
-//    {}
+public:
+    CFunction(const std::string& Name = {})
+        : CRecord(Name)
+    {}
+
+    void SetRowInvokePtr(void* InvokePtr) { RowInvokePtr_ = InvokePtr; }
+    void* GetRowInvokePtr() { return RowInvokePtr_; }
+
+    void SetReflInvokePtr(FPReflInvoke InvokePtr) { ReflInvokePtr_ = InvokePtr; }
+    void* GetReflInvokePtr() { return ReflInvokePtr_; }
+
+    void Invoke(void* ClassObject, void* Frame)
+    {
+        ReflInvokePtr_(ClassObject, Frame);
+    }
+
+    void SetFrameSize(uint32_t FrameSize) { FrameSize_ = FrameSize; }
+    uint32_t GetFrameSize() { return FrameSize_; }
+
+    void AddArgument(CProperty* Parameter) { return Parameters_.push_back(Parameter); }
+    void SetReturnValue(CProperty* ReturnType) { ReturnType_ = ReturnType;}
+
+private:
+    uint32_t FrameSize_;
+    std::vector<CProperty*> Parameters_;
+    CProperty* ReturnType_{nullptr};
+    void* RowInvokePtr_{ nullptr };
+    FPReflInvoke ReflInvokePtr_{ nullptr };
+
+
+// 
 //
 //    struct CFrame
 //    {

@@ -82,6 +82,8 @@ public:
 
 	kainjow::mustache::mustache HeaderTmpl_;
 	kainjow::mustache::mustache SourceTmpl_;
+
+	kainjow::mustache::data GlobalExpressionList_{ kainjow::mustache::data::type::list };
 	
 	kainjow::mustache::data ClassStaticInitializerExpressionList_{ kainjow::mustache::data::type::list };
 	kainjow::mustache::data ClassStaticInitializer_;
@@ -90,8 +92,6 @@ public:
 	kainjow::mustache::data PropertyInitializerExpressionList_{ kainjow::mustache::data::type::list };
 	kainjow::mustache::data PropertyInitializer_;
 	kainjow::mustache::data PropertyInitializerList_{ kainjow::mustache::data::type::list };
-
-	kainjow::mustache::data GlobalExpressionList_{ kainjow::mustache::data::type::list };
 
 	kainjow::mustache::data FunctionInitializerExpressionList_{ kainjow::mustache::data::type::list };
 	kainjow::mustache::data FunctionInitializer_;

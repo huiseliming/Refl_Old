@@ -86,3 +86,17 @@ private:
     static int64_t IdCounter;
     static std::vector<CRecord*> Metadatas;
 };
+
+template<typename From, typename To>
+union TForceCast {
+    From F;
+    To T;
+};
+
+template<typename From, typename To>
+To ForceCast(From F)
+{
+    TForceCast<From, To> U;
+    U.F = F;
+    return U.T;
+}
