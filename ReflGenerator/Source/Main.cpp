@@ -400,7 +400,7 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                         );
                         DefaultParametersIndex++;
                     }
-                    if (FrameStructInputs[FrameStructInputs.size() - 1] == ',')
+                    if (FrameStructInputs.size() > 0 && FrameStructInputs[FrameStructInputs.size() - 1] == ',')
                     {
                         FrameStructInputs.resize(FrameStructInputs.size() - 1);
                     }
