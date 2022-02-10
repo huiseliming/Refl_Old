@@ -7,6 +7,7 @@
 #include "StaticType.h"
 #include "Property.h"
 #include "Function.h"
+#include "Object.h"
 
 
 

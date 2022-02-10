@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include "ReflExport.h"
 
-#ifdef __METADATA__
+#ifdef __REFL_GENERATED__
 #define METADATA(...)  __attribute__((annotate("Metadata" __VA_OPT__(",") #__VA_ARGS__)))
 #define CLASS(...)     METADATA(__VA_ARGS__)
 #define STRUCT(...)    METADATA(__VA_ARGS__)

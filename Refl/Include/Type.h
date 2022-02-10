@@ -5,6 +5,14 @@
 class CClass;
 class CEnum;
 
+typedef void* (*FPReflNew)        ();
+typedef void  (*FPReflDelete)     (void*);
+typedef void  (*FPReflConstructor)(void*);
+typedef void  (*FPReflDestructor) (void*);
+typedef void  (*FPReflAssign)     (void*, void*);
+
+
+
 class REFL_API CType : public CRecord
 {
 public:
@@ -20,6 +28,13 @@ public:
     static std::unordered_map<std::string, CType*>& NameToType;
     static std::list<std::function<void()>>& PostStaticInitializerEventList();
     static void ProcessPostStaticInitializerEvent();
+
+    FPReflNew         New        { nullptr };
+    FPReflDelete      Delete     { nullptr };
+    FPReflConstructor Constructor{ nullptr };
+    FPReflDestructor  Destructor { nullptr };
+    FPReflAssign      CopyAssign { nullptr };
+    FPReflAssign      MoveAssign { nullptr };
 private:
     uint32_t Size_;
 };
@@ -37,9 +52,19 @@ struct TAutoInitializer
     TAutoInitializer()
     {
         CType* Type = nullptr;
-         
         if constexpr (std::is_enum_v<T>) Type = TEnum<T>::StaticEnum();
         else  Type = T::StaticClass();
+        if constexpr (std::is_default_constructible_v<T>)
+        {
+            Type->New = [] () -> void*{ return new T; };
+            Type->Constructor = [](void* A) { new (A)T; };
+        }
+        Type->Delete = [](void* A) { delete (T*)A; };
+        Type->Destructor  = [] (void* A) { ((const T *)(A))->~T(); };
+        if constexpr (std::is_copy_assignable_v<T>)
+            Type->CopyAssign = [] (void* A, void* B) { (*(T*)A) = (*(const T*)B); };
+        if constexpr (std::is_move_assignable_v<T>)
+            Type->MoveAssign = [](void* A, void* B) { (*(T*)A) = std::move(*(T*)B); };
         assert(!CType::StaticTable().contains(Type->GetName()));
         CType::StaticTable().insert(std::make_pair(Type->GetName(), Type));
     }
