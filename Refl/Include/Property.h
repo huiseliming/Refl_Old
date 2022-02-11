@@ -61,7 +61,8 @@ public:
 
 
     bool IsVoid() { return false; }
-    uint64_t GetFlag()                { return Flag_; }
+    uint64_t GetFlag() { return Flag_; }
+    uint64_t GetTypeFlag() { return Flag_ & EPF_TypeFlagBits; }
     void*    GetRowPtr(void const* ClassPtr) const { return (void*)(((char*)(ClassPtr)) + AddressOffset_); }
 
     virtual CType* GetType() { return nullptr; }

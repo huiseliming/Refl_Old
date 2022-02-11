@@ -9,6 +9,9 @@ public:
 	{}
 	virtual ~CObject() {}
 
+	Serialize
+	SerializeScriptProperties
+
 	CClass* GetClass() { return Class_; }
 	void SetClass(CClass* Class) { Class_ = Class; }
 private:
