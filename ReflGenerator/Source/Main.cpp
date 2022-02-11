@@ -404,12 +404,19 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                     {
                         FrameStructInputs.resize(FrameStructInputs.size() - 1);
                     }
-                    ReflFunctionGlobalExpressionList.push_back(
-                        ParseCppTypeToPropertyStaticInitializerCode(EntityIndex, CppMemberFunction.return_type(), FrameStrust, "__R__", {})
-                    );
-                    ExpressionList.push_back(
-                        "Func.SetReturnValue(CLS_" + FrameStrust + "__PROP___R____STATIC_INITIALIZER());\n"
-                    );
+                    if (!(CppMemberFunction.return_type().kind() == cppast::cpp_type_kind::builtin_t &&
+                        static_cast<const cppast::cpp_builtin_type&>(CppMemberFunction.return_type()).builtin_type_kind() == cppast::cpp_void))
+                    {
+                        std::string TypeDeclName = ParseCppTypeToSpellString(CppMemberFunction.return_type());
+                        FrameStructMemberList.push_back(TypeDeclName + " R_R_R");
+                        ReflFunctionGlobalExpressionList.push_back(
+                            ParseCppTypeToPropertyStaticInitializerCode(EntityIndex, CppMemberFunction.return_type(), FrameStrust, "R_R_R", {})
+                        );
+                        ExpressionList.push_back(
+                            "Func.SetReturnValue(CLS_" + FrameStrust + "__PROP_R_R_R__STATIC_INITIALIZER());\n"
+                        );
+                        PropertyInitializerFunctionData.set("ReturnValueEqual", "FS.R_R_R = ");
+                    }
                     PropertyInitializerFunctionData.set("ClassName", ClassName);
                     PropertyInitializerFunctionData.set("FunctionName", CppMemberFunction.name());
                     PropertyInitializerFunctionData.set("ReturnType", "int");

@@ -47,8 +47,8 @@ enum EPropertyFlag : uint64_t
 class CProperty : public CRecord
 {
 public:
-    CProperty(const std::string& Name_)
-        : CRecord(Name_)
+    CProperty(const std::string& Name)
+        : CRecord(Name)
         , Flag_(0)
         , AddressOffset_(0)
     {
@@ -59,6 +59,8 @@ public:
     void AddFlags(uint64_t Flags) { Flag_ |= Flags; }
     void RemoveFlags(uint64_t Flags) { Flag_ &= ~Flags; }
 
+
+    bool IsVoid() { return false; }
     uint64_t GetFlag()                { return Flag_; }
     void*    GetRowPtr(void const* ClassPtr) const { return (void*)(((char*)(ClassPtr)) + AddressOffset_); }
 
@@ -177,7 +179,7 @@ public:
     CVoidProperty(const std::string& name)
         : CProperty(name)
     {}
-
+    bool IsVoid() { return true; }
 };
 
 class CBoolProperty : public CProperty
