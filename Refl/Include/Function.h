@@ -3,9 +3,10 @@
 #include <memory>
 #include "Record.h"
 #include "Property.h"
+#include "Archive.h"
 
 typedef void (*FPReflInvoke)(void*, void*);
-
+typedef void (*FPReflFrameStructSerializer)(CArchive& Ar, void* FrameStruct);
 
 class REFL_API CFunction : public CRecord
 {
@@ -28,8 +29,18 @@ public:
     void SetFrameSize(uint32_t FrameSize) { FrameSize_ = FrameSize; }
     uint32_t GetFrameSize() { return FrameSize_; }
 
-    void AddArgument(CProperty* Parameter) { return Parameters_.push_back(Parameter); }
+    std::vector<CProperty*>& GetParameters() { return Parameters_; }
+
+    void AddParameter(CProperty* Parameter) { return Parameters_.push_back(Parameter); }
     void SetReturnValue(CProperty* ReturnType) { ReturnType_ = ReturnType;}
+
+    void SetFrameStructSerializer(FPReflFrameStructSerializer FrameStructSerializer) { FrameStructSerializer_ = FrameStructSerializer; }
+    FPReflFrameStructSerializer GetFrameStructSerializer() { return FrameStructSerializer_; }
+
+
+public:
+    //static std::vector<CFunction*>& StaticIndexToFunction();
+    //static std::vector<CFunction*>& IndexToFunction;
 
 private:
     uint32_t FrameSize_;
@@ -37,7 +48,7 @@ private:
     CProperty* ReturnType_{nullptr};
     void* RowInvokePtr_{ nullptr };
     FPReflInvoke ReflInvokePtr_{ nullptr };
-
+    FPReflFrameStructSerializer FrameStructSerializer_{ nullptr };
 
 // 
 //

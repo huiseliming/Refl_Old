@@ -33,7 +33,7 @@
 //    return reinterpret_cast<CClass*>(StaticType<T>());
 //}
 
-struct CStaticString
+struct REFL_API CStaticString
 {
     static const std::string Empty;
     static const std::string True;

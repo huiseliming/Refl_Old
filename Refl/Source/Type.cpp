@@ -1,4 +1,5 @@
 #include "Type.h"
+#include "Archive.h"
 #include <cassert>
 
 std::unordered_map<std::string, CType*>& CType::NameToType = CType::StaticTable();

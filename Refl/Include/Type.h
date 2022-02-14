@@ -2,6 +2,7 @@
 #include <functional>
 #include "Record.h"
 
+struct CArchive;
 class CClass;
 class CEnum;
 
@@ -24,6 +25,7 @@ public:
     void SetSize(uint32_t Size) { Size_ = Size; }
     uint32_t GetSize() { return Size_; }
 
+    static CType* FindType(const std::string& Name) { return NameToType.contains(Name) ? NameToType[Name] : nullptr; }
     static std::unordered_map<std::string, CType*>& StaticTable();
     static std::unordered_map<std::string, CType*>& NameToType;
     static std::list<std::function<void()>>& PostStaticInitializerEventList();

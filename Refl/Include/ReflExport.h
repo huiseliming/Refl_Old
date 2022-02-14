@@ -9,10 +9,10 @@
 #  ifndef REFL_API
 #    ifdef Refl_EXPORTS
         /* We are building this library */
-#      define REFL_API 
+#      define REFL_API __declspec(dllexport)
 #    else
         /* We are using this library */
-#      define REFL_API 
+#      define REFL_API __declspec(dllimport)
 #    endif
 #  endif
 

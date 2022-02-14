@@ -55,14 +55,15 @@ CPropertyInfo ParseCppTypeToPropertyInfo(const cppast::cpp_entity_index& EntityI
     {
         auto& CppMemberVariableUserDefinedType = static_cast<const cppast::cpp_user_defined_type&>(*CppTypePtr);
         std::string CppMemberVariableUserDefinedTypeName = CppMemberVariableUserDefinedType.entity().name();
-        if      (CppMemberVariableUserDefinedTypeName == "uint8_t")   PropertyInfo.PropertyFlag |= EPF_UInt8Flag;
-        else if (CppMemberVariableUserDefinedTypeName == "uint16_t")  PropertyInfo.PropertyFlag |= EPF_UInt16Flag;
-        else if (CppMemberVariableUserDefinedTypeName == "uint32_t")  PropertyInfo.PropertyFlag |= EPF_UInt32Flag;
-        else if (CppMemberVariableUserDefinedTypeName == "uint64_t")  PropertyInfo.PropertyFlag |= EPF_UInt64Flag;
-        else if (CppMemberVariableUserDefinedTypeName == "int8_t")    PropertyInfo.PropertyFlag |= EPF_SInt8Flag;
-        else if (CppMemberVariableUserDefinedTypeName == "int16_t")   PropertyInfo.PropertyFlag |= EPF_SInt16Flag;
-        else if (CppMemberVariableUserDefinedTypeName == "int32_t")   PropertyInfo.PropertyFlag |= EPF_SInt32Flag;
-        else if (CppMemberVariableUserDefinedTypeName == "int64_t")   PropertyInfo.PropertyFlag |= EPF_SInt64Flag;
+        if      (CppMemberVariableUserDefinedTypeName == "uint8_t")       PropertyInfo.PropertyFlag |= EPF_UInt8Flag;
+        else if (CppMemberVariableUserDefinedTypeName == "uint16_t")      PropertyInfo.PropertyFlag |= EPF_UInt16Flag;
+        else if (CppMemberVariableUserDefinedTypeName == "uint32_t")      PropertyInfo.PropertyFlag |= EPF_UInt32Flag;
+        else if (CppMemberVariableUserDefinedTypeName == "uint64_t")      PropertyInfo.PropertyFlag |= EPF_UInt64Flag;
+        else if (CppMemberVariableUserDefinedTypeName == "int8_t")        PropertyInfo.PropertyFlag |= EPF_SInt8Flag;
+        else if (CppMemberVariableUserDefinedTypeName == "int16_t")       PropertyInfo.PropertyFlag |= EPF_SInt16Flag;
+        else if (CppMemberVariableUserDefinedTypeName == "int32_t")       PropertyInfo.PropertyFlag |= EPF_SInt32Flag;
+        else if (CppMemberVariableUserDefinedTypeName == "int64_t")       PropertyInfo.PropertyFlag |= EPF_SInt64Flag;
+        else if (CppMemberVariableUserDefinedTypeName == "std::string")   PropertyInfo.PropertyFlag |= EPF_StringFlag;
         else
         {
             if (static_cast<size_t>(CppMemberVariableUserDefinedType.entity().id().size()) > 0)

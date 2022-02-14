@@ -50,8 +50,8 @@ public:
     CRecord(const std::string& Name)
         : Name_(Name)
     {
-        //Metadatas.push_back(this);
-        //Id_ = IdCounter++;
+        Records.push_back(this);
+        Id_ = IdCounter++;
     }
     virtual ~CRecord() = default;
 
@@ -77,6 +77,8 @@ public:
 
     const std::string& GetName() const { return Name_; }
 
+    int64_t GetId() { return Id_; }
+
 protected:
     int64_t Id_{INT64_MAX};
     std::string Name_;
@@ -84,7 +86,7 @@ protected:
 
 private:
     static int64_t IdCounter;
-    static std::vector<CRecord*> Metadatas;
+    static std::vector<CRecord*> Records;
 };
 
 template<typename From, typename To>

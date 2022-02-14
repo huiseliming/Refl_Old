@@ -375,8 +375,12 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                 {
                     std::string ClassName = CodeGenerator.ClassStaticInitializer_.get("ClassName")->string_value();
                     auto& CppMemberFunction = static_cast<const cppast::cpp_member_function&>(e);
-                    CodeGenerator.FunctionBegin(CppMemberFunction.name());
-                    std::string FrameStrust = ClassName + "_" + CppMemberFunction.name() + "_FRAME_STRUCT";
+                    std::string FunctionName = CppMemberFunction.name();
+                    std::string FunctionSignature;
+                    std::string FunctionParametersSerializer;
+                    std::string ForwardParameters;
+                    CodeGenerator.FunctionBegin(FunctionName);
+                    std::string FrameStrust = ClassName + "_" + FunctionName + "_FRAME_STRUCT";
                     std::string FrameStructInputs;
                     std::string FrameStructOutput;
                     kainjow::mustache::mustache PropertyInitializerFunctionTmpl(GeneratedTemplates::ReflFunctionCallTemplate);
@@ -389,16 +393,25 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                     {
                         std::string ParameterName = It->name() != "" ? It->name() : "__" + std::to_string(DefaultParametersIndex) + "__";
                         ReflFunctionGlobalExpressionList.push_back(
-                            ParseCppTypeToPropertyStaticInitializerCode(EntityIndex, It->type(), FrameStrust, It->name(), {})
+                            ParseCppTypeToPropertyStaticInitializerCode(EntityIndex, It->type(), FrameStrust, ParameterName, {})
                         );
                         std::string TypeDeclName = ParseCppTypeToSpellString(It->type());
                         std::for_each(TypeDeclName.begin(), TypeDeclName.end(), [] (char& c) { if(c == '&') c = '*'; });
                         FrameStructMemberList.push_back(TypeDeclName + " " + ParameterName);
-                        FrameStructInputs += (It->type().kind() == cppast::cpp_type_kind::reference_t ? "*FS." : "FS.") + ParameterName + ",";
+                        FrameStructInputs += (It->type().kind() == cppast::cpp_type_kind::reference_t ? "*(FS->)" : "FS->") + ParameterName + ",";
                         ExpressionList.push_back(
-                            "Func.AddArgument(CLS_" + FrameStrust + "__PROP_" + It->name() + "__STATIC_INITIALIZER());\n"
+                            "Func.AddParameter(CLS_" + FrameStrust + "__PROP_" + ParameterName + "__STATIC_INITIALIZER());\n"
                         );
                         DefaultParametersIndex++;
+                        if (!FunctionSignature.empty())
+                            FunctionSignature += ", ";
+                        FunctionSignature += TypeDeclName;
+                        FunctionSignature += " ";
+                        FunctionSignature += ParameterName;
+                        if (!ForwardParameters.empty())
+                            ForwardParameters += ", ";
+                        ForwardParameters += ParameterName;
+                        FunctionParametersSerializer += " << " + ParameterName;
                     }
                     if (FrameStructInputs.size() > 0 && FrameStructInputs[FrameStructInputs.size() - 1] == ',')
                     {
@@ -417,8 +430,33 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                         );
                         PropertyInitializerFunctionData.set("ReturnValueEqual", "FS.R_R_R = ");
                     }
+                    // RPC function generated
+                    if (CustomMetadatas.contains("Client"))
+                    {
+                        ReflFunctionGlobalExpressionList.push_back(
+                            ParseCppTypeToSpellString(CppMemberFunction.return_type(), false) + " " + ClassName + "::" + FunctionName + "(" + FunctionSignature + ")\n"
+                            "{\n"
+                            "    if (!GetWorld()) return ;\n"
+                            "    if (GetWorld()->ReplicatedWorldType_ == EReplicatedWorldType::ERWT_Uninitialized) return;\n"
+                            "    if (GetWorld()->ReplicatedWorldType_ == EReplicatedWorldType::ERWT_Client) return " + FunctionName + "_Implementation(" + ForwardParameters + ");\n"
+                            "    GetWorld()->RemoteProcedureCallClient(this, CLS_" + ClassName + "__FUNC_" + FunctionName+ "__STATIC_INITIALIZER(), [&](CArchive& Ar) { Ar " + FunctionParametersSerializer + "; }); \n"
+                            "}\n"
+                        );
+                    }
+                    if (CustomMetadatas.contains("Server"))
+                    {
+                        ReflFunctionGlobalExpressionList.push_back(
+                            ParseCppTypeToSpellString(CppMemberFunction.return_type(), false) + " " + ClassName + "::" + FunctionName + "(" + FunctionSignature + ")\n"
+                            "{\n"
+                            "    if (!GetWorld()) return " + FunctionName + "_Implementation(" + ForwardParameters + ");\n"
+                            "    if (GetWorld()->ReplicatedWorldType_ == EReplicatedWorldType::ERWT_Uninitialized) return " + FunctionName + "_Implementation(" + ForwardParameters + ");\n"
+                            "    if (GetWorld()->ReplicatedWorldType_ == EReplicatedWorldType::ERWT_Server) return " + FunctionName + "_Implementation(" + ForwardParameters + ");\n"
+                            "    GetWorld()->RemoteProcedureCallServer(this, CLS_" + ClassName + "__FUNC_" + FunctionName + "__STATIC_INITIALIZER(), [&](CArchive& Ar) { Ar " + FunctionParametersSerializer + "; });\n"
+                            "}\n"
+                        );
+                    }
                     PropertyInitializerFunctionData.set("ClassName", ClassName);
-                    PropertyInitializerFunctionData.set("FunctionName", CppMemberFunction.name());
+                    PropertyInitializerFunctionData.set("FunctionName", FunctionName);
                     PropertyInitializerFunctionData.set("ReturnType", "int");
                     PropertyInitializerFunctionData.set("FrameStructInputs", FrameStructInputs);
                     PropertyInitializerFunctionData.set("FrameStructOutput", FrameStructOutput);
@@ -429,7 +467,7 @@ void PrintAst(CCodeGenerator& CodeGenerator ,const cppast::cpp_entity_index& Ent
                         PropertyInitializerFunctionTmpl.render(PropertyInitializerFunctionData)
                     );
                     CodeGenerator.ClassStaticInitializerExpressionList_.push_back(
-                        "    Cls.AddFunction(CLS_" + ClassName + "__FUNC_" + CppMemberFunction.name() + "__STATIC_INITIALIZER());\n"
+                        "    Cls.AddFunction(CLS_" + ClassName + "__FUNC_" + FunctionName + "__STATIC_INITIALIZER());\n"
                     );
                     ContainerEntityExitCallback = [&] { CodeGenerator.FunctionEnd(); };
                 }
@@ -602,6 +640,8 @@ int main(int argc, char** argv) try
         {
             CCodeGenerator& CodeGenerator = CodeGenerators[i];
             std::string InputFile = InputFiles[i];
+            size_t Pos = InputFile.find_last_of(".");
+            std::string InputFileCppFile = InputFile.substr(0, Pos) + ".cpp";
             std::string InputFileFullPath = std::filesystem::weakly_canonical(InputFile).string();
             std::string OuputHeaderFileFullPath = GetOuputHeaderFileFullPath(InputFileFullPath);
             if (std::filesystem::exists(OuputHeaderFileFullPath) && !IsDebugRun)

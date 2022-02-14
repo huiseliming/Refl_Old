@@ -3,7 +3,7 @@
 #include <map>
 #include <set>
 
-class CEnum : public CType
+class REFL_API CEnum : public CType
 {
 public:
     CEnum(const std::string& InName = "", uint32_t InSize = 0)

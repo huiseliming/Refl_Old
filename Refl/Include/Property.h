@@ -1,5 +1,6 @@
 #pragma once
 #include "Record.h"
+#include "Object.h"
 #include "StaticType.h"
 
 class CType;
@@ -21,8 +22,9 @@ enum EPropertyFlag : uint64_t
 	EPF_FloatFlag                = 1ULL << 10,
 	EPF_DoubleFlag               = 1ULL << 11,
 	EPF_StringFlag               = 1ULL << 12,
-	EPF_ClassFlag                = 1ULL << 13,
-	EPF_EnumFlag			     = 1ULL << 14,
+	EPF_EnumFlag			     = 1ULL << 13,
+	EPF_ClassFlag                = 1ULL << 14,
+    EPF_ObjectFlag               = 1ULL << 15,
 
 	EPF_VectorFlag               = 1ULL << 24,
 	EPF_MapFlag                  = 1ULL << 25,
@@ -44,7 +46,7 @@ enum EPropertyFlag : uint64_t
 };
 
 
-class CProperty : public CRecord
+class REFL_API CProperty : public CRecord
 {
 public:
     CProperty(const std::string& Name)
@@ -60,7 +62,13 @@ public:
     void RemoveFlags(uint64_t Flags) { Flag_ &= ~Flags; }
 
 
-    bool IsVoid() { return false; }
+    virtual bool IsVoid() { return false; }
+    bool IsPointer()   { return EPF_PointerFlag & Flag_; }
+    bool IsReference() { return EPF_ReferenceFlag & Flag_; }
+    bool IsConst()     { return EPF_ConstFlag & Flag_; }
+    bool IsVolatile()  { return EPF_VolatileFlag & Flag_; }
+
+    bool HasAnyFlag(uint64_t Flag) { return Flag_ & Flag; }
     uint64_t GetFlag() { return Flag_; }
     uint64_t GetTypeFlag() { return Flag_ & EPF_TypeFlagBits; }
     void*    GetRowPtr(void const* ClassPtr) const { return (void*)(((char*)(ClassPtr)) + AddressOffset_); }
@@ -92,6 +100,15 @@ public:
     virtual void SetNumericFromString(void* ClassPtr, char const* Value) const {}
     virtual std::string GetNumericToString(void const* ClassPtr) const { return ""; }
     virtual std::string GetBoolToString(void const* ClassPtr) const { return ""; }
+
+    virtual CObject* GetObject(void const* ClassPtr) const { return nullptr; }
+    virtual void SetObject(void const* ClassPtr, CObject* Value) { }
+
+    virtual uint32_t GetPropertySize() const { return 0; }
+    virtual uint32_t GetTypeSize() const { return 0; }
+
+    virtual void Construct(void* ClassPtr) {}
+    virtual void Destruct(void* ClassPtr) {}
 
 protected:
     uint64_t Flag_;
@@ -170,7 +187,7 @@ struct TNumericProperty : public CProperty
         assert(std::is_floating_point_v<T>);
         return (double)TIPropertyAccessor::Get(GetRowPtr(ClassPtr));
     }
-
+    virtual uint32_t GetTypeSize() const override { return sizeof(T); }
 };
 
 class CVoidProperty : public CProperty
@@ -198,12 +215,13 @@ public:
     }
     virtual bool GetBool(void const* ClassPtr) const override
     {
-        TIPropertyAccessor::Get(GetRowPtr(ClassPtr));
+        return TIPropertyAccessor::Get(GetRowPtr(ClassPtr));
     }
     virtual std::string GetBoolToString(void const* ClassPtr) const 
     { 
         return GetBool(ClassPtr) ? (CStaticString::True) : (CStaticString::False);
     }
+    virtual uint32_t GetTypeSize() const override { return sizeof(bool); }
 };
 
 
@@ -261,7 +279,10 @@ public:
     {
         TIPropertyAccessor::Set(GetRowPtr(ClassPtr), std::to_string(Value));
     }
+    virtual void Construct(void* ClassPtr) override { new (GetRowPtr(ClassPtr))std::string; }
+    virtual void Destruct(void* ClassPtr) override { ((const std::string*)(GetRowPtr(ClassPtr)))->~basic_string(); }
 
+    virtual uint32_t GetTypeSize() const override { return sizeof(std::string); }
 };
 
 class CClassProperty : public CProperty
@@ -273,9 +294,24 @@ public:
     virtual CType* GetType() override { return Class_; }
     virtual CClass* GetClass() override { return Class_; }
     void SetClass(CClass* Class) { Class_ = Class;};
+    virtual void Construct(void* ClassPtr) override { Class_->Constructor(GetRowPtr(ClassPtr)); }
+    virtual void Destruct(void* ClassPtr) override { Class_->Destructor(GetRowPtr(ClassPtr)); }
+
+    virtual uint32_t GetTypeSize() const override { return Class_->GetSize(); }
 protected:
     CClass* Class_;
 };
+
+class CObjectProperty : public CClassProperty
+{
+public:
+    CObjectProperty(const std::string& name)
+        : CClassProperty(name)
+    {}
+    virtual CObject* GetObject(void const* ClassPtr) const { return *(CObject**)GetRowPtr(ClassPtr); }
+    virtual void SetObject(void const* ClassPtr, CObject* Value) { *(CObject**)GetRowPtr(ClassPtr) = Value; }
+};
+
 
 class CEnumProperty : public CProperty
 {
@@ -286,6 +322,8 @@ public:
     virtual CType* GetType() override { return Enum_; }
     virtual CEnum* GetEnum() override { return Enum_; }
     void SetEnum(CEnum* Enum) { Enum_ = Enum; };
+
+    virtual uint32_t GetTypeSize() const override { return Enum_->GetSize(); }
 protected:
     CEnum* Enum_;
 };
@@ -299,7 +337,6 @@ public:
 
     virtual CProperty* GetDataProperty() { return DataProperty_; }
     void SetDataProperty(CProperty* DataProperty) { DataProperty_ = DataProperty;}
-
     CProperty* DataProperty_;
 };
 

@@ -3,7 +3,7 @@ file(GLOB_RECURSE PublicHeader Include/*.h)
 file(GLOB_RECURSE PrivateHeader Source/*.h)
 file(GLOB_RECURSE PrivateSource Source/*.cpp)
 
-add_library(Refl ${PublicHeader} ${PrivateHeader} ${PrivateSource})
+add_library(Refl SHARED ${PublicHeader} ${PrivateHeader} ${PrivateSource})
 
 target_include_directories(Refl PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Include>
