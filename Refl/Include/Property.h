@@ -73,9 +73,10 @@ public:
     uint64_t GetTypeFlag() { return Flag_ & EPF_TypeFlagBits; }
     void*    GetRowPtr(void const* ClassPtr) const { return (void*)(((char*)(ClassPtr)) + AddressOffset_); }
 
-    virtual CType* GetType() { return nullptr; }
+    virtual CType* GetType() { return Type_; }
     virtual CClass* GetClass() { return nullptr; }
     virtual CEnum* GetEnum() { return nullptr; }
+    virtual CVectorTemplateType* GetTemplateInstantiationType() { return nullptr; }
 
     virtual CProperty* GetDataProperty() { return nullptr; }
 
@@ -104,13 +105,14 @@ public:
     virtual CObject* GetObject(void const* ClassPtr) const { return nullptr; }
     virtual void SetObject(void const* ClassPtr, CObject* Value) { }
 
-    virtual uint32_t GetPropertySize() const { return 0; }
-    virtual uint32_t GetTypeSize() const { return 0; }
+    //virtual uint32_t GetPropertySize() const { return 0; }
+    virtual uint32_t GetTypeSize() const { return Type_->GetSize(); }
 
-    virtual void Construct(void* ClassPtr) {}
-    virtual void Destruct(void* ClassPtr) {}
+    virtual void Construct(void* ClassPtr) { Type_->Constructor(GetRowPtr(ClassPtr)); }
+    virtual void Destruct(void* ClassPtr) { Type_->Destructor(GetRowPtr(ClassPtr)); }
 
 protected:
+    CType* Type_{nullptr};
     uint64_t Flag_;
     uint32_t AddressOffset_;
 };
@@ -144,6 +146,7 @@ struct TNumericProperty : public CProperty
     TNumericProperty(const std::string& name)
         : CProperty(name)
     {
+        Type_ = TBuiltinType<T>::StaticType();
     }
 
     virtual void SetUInt(void* ClassPtr, uint64_t Value) const override
@@ -190,7 +193,7 @@ struct TNumericProperty : public CProperty
     virtual uint32_t GetTypeSize() const override { return sizeof(T); }
 };
 
-class CVoidProperty : public CProperty
+class REFL_API CVoidProperty : public CProperty
 {
     using TIPropertyAccessor = TPropertyAccessor<void>;
 public:
@@ -200,13 +203,14 @@ public:
     bool IsVoid() { return true; }
 };
 
-class CBoolProperty : public CProperty
+class REFL_API CBoolProperty : public CProperty
 {
     using TIPropertyAccessor = TPropertyAccessor<bool>;
 public:
     CBoolProperty(const std::string& name)
         : CProperty(name)
     {
+        Type_ = TBuiltinType<bool>::StaticType();
     }
 
     virtual void SetBool(void* ClassPtr, bool Value) const override
@@ -221,9 +225,18 @@ public:
     { 
         return GetBool(ClassPtr) ? (CStaticString::True) : (CStaticString::False);
     }
-    virtual uint32_t GetTypeSize() const override { return sizeof(bool); }
 };
 
+template class REFL_API TNumericProperty<int8_t>;
+template class REFL_API TNumericProperty<int16_t>;
+template class REFL_API TNumericProperty<int32_t>;
+template class REFL_API TNumericProperty<int64_t>;
+template class REFL_API TNumericProperty<int8_t>;
+template class REFL_API TNumericProperty<int16_t>;
+template class REFL_API TNumericProperty<int32_t>;
+template class REFL_API TNumericProperty<int64_t>;
+template class REFL_API TNumericProperty<float>;
+template class REFL_API TNumericProperty<double>;
 
 using CSInt8Property = TNumericProperty<int8_t>;
 using CSInt16Property = TNumericProperty<int16_t>;
@@ -233,17 +246,19 @@ using CUInt8Property = TNumericProperty<int8_t>;
 using CUInt16Property = TNumericProperty<int16_t>;
 using CUInt32Property = TNumericProperty<int32_t>;
 using CUInt64Property = TNumericProperty<int64_t>;
-
 using CFloatProperty = TNumericProperty<float>;
 using CDoubleProperty = TNumericProperty<double>;
 
-class CStringProperty : public CProperty
+
+class REFL_API CStringProperty : public CProperty
 {
     using TIPropertyAccessor = TPropertyAccessor<std::string>;
 public:
     CStringProperty(const std::string& name)
         : CProperty(name)
-    {}
+    {
+        Type_ = TNamedType<std::string>::StaticType();
+    }
 
     virtual std::string GetString(void const* ClassPtr) const override
     {
@@ -279,30 +294,21 @@ public:
     {
         TIPropertyAccessor::Set(GetRowPtr(ClassPtr), std::to_string(Value));
     }
-    virtual void Construct(void* ClassPtr) override { new (GetRowPtr(ClassPtr))std::string; }
-    virtual void Destruct(void* ClassPtr) override { ((const std::string*)(GetRowPtr(ClassPtr)))->~basic_string(); }
 
-    virtual uint32_t GetTypeSize() const override { return sizeof(std::string); }
 };
 
-class CClassProperty : public CProperty
+class REFL_API CClassProperty : public CProperty
 {
 public:
     CClassProperty(const std::string& name)
         : CProperty(name)
     {}
-    virtual CType* GetType() override { return Class_; }
-    virtual CClass* GetClass() override { return Class_; }
-    void SetClass(CClass* Class) { Class_ = Class;};
-    virtual void Construct(void* ClassPtr) override { Class_->Constructor(GetRowPtr(ClassPtr)); }
-    virtual void Destruct(void* ClassPtr) override { Class_->Destructor(GetRowPtr(ClassPtr)); }
 
-    virtual uint32_t GetTypeSize() const override { return Class_->GetSize(); }
-protected:
-    CClass* Class_;
+    virtual CClass* GetClass() override { return (CClass*)Type_; }
+    void SetClass(CClass* Class) { Type_ = Class;};
 };
 
-class CObjectProperty : public CClassProperty
+class REFL_API CObjectProperty : public CClassProperty
 {
 public:
     CObjectProperty(const std::string& name)
@@ -313,34 +319,36 @@ public:
 };
 
 
-class CEnumProperty : public CProperty
+class REFL_API CEnumProperty : public CProperty
 {
 public:
     CEnumProperty(const std::string& name)
         : CProperty(name)
     {}
-    virtual CType* GetType() override { return Enum_; }
-    virtual CEnum* GetEnum() override { return Enum_; }
-    void SetEnum(CEnum* Enum) { Enum_ = Enum; };
+    virtual CType* GetType() override { return Type_; }
+    virtual CEnum* GetEnum() override { return (CEnum*)Type_; }
+    void SetEnum(CEnum* Enum) { Type_ = Enum; };
 
-    virtual uint32_t GetTypeSize() const override { return Enum_->GetSize(); }
-protected:
-    CEnum* Enum_;
 };
 
-class CVectorProperty : public CProperty
+class REFL_API CVectorProperty : public CProperty
 {
 public:
     CVectorProperty(const std::string& name)
         : CProperty(name)
     {}
 
-    virtual CProperty* GetDataProperty() { return DataProperty_; }
+    virtual CProperty* GetDataProperty() override { return DataProperty_; }
     void SetDataProperty(CProperty* DataProperty) { DataProperty_ = DataProperty;}
+    virtual CVectorTemplateType* GetTemplateInstantiationType() override { return TemplateInstantiationType_; }
+    void SetTemplateInstantiationType(CVectorTemplateType* Type) { TemplateInstantiationType_ = Type; }
+
+protected:
+    CVectorTemplateType* TemplateInstantiationType_;
     CProperty* DataProperty_;
 };
 
-class CMapProperty : public CProperty
+class REFL_API CMapProperty : public CProperty
 {
 public:
     CMapProperty(const std::string& name)
@@ -351,7 +359,7 @@ public:
     CProperty* ValueProperty;
 };
 
-class CUnorderedMapProperty : public CProperty
+class REFL_API CUnorderedMapProperty : public CProperty
 {
 public:
     CUnorderedMapProperty(const std::string& name)
@@ -362,7 +370,7 @@ public:
     CProperty* ValueProperty;
 };
 
-class CUnknowProperty : public CProperty
+class REFL_API CUnknowProperty : public CProperty
 {
 public:
     CUnknowProperty(const std::string& name)

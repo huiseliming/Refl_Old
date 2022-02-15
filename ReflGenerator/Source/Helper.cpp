@@ -283,6 +283,7 @@ std::string ParseCppTypeToPropertyStaticInitializerCode(
 	const cppast::cpp_type* TypePtr = &Type;
 	std::string PropertyStaticInitializerCode;
 	CPropertyInfo PropertyInfo = {};
+	std::string VectorTemplateInstantiationTypeName;
 	if (TypePtr->kind() == cppast::cpp_type_kind::template_instantiation_t)
 	{
 		auto& CppMemberVariableTemplateInstantiationType = static_cast<const cppast::cpp_template_instantiation_type&>(*TypePtr);
@@ -305,15 +306,17 @@ std::string ParseCppTypeToPropertyStaticInitializerCode(
 				//{
 				//	VectorSubPropertyFunctionName = "CLS_" + ClassName + "__PROP_" + PropertyName + "__VectorElement__STATIC_INITIALIZER";
 				//}
+				VectorTemplateInstantiationTypeName = ParseCppTypeToSpellString(CppMemberVariableVectorType);
 				PropertyStaticInitializerCode += 
 					GeneratePropertyStaticInitializerFunctionCode(
 						"CLS_" + ClassName + "__PROP_" + PropertyName + "__VectorElement__STATIC_INITIALIZER",
 						PropertyName + "__VectorElement",
 						VectorElementPropertyInfo.PropertyFlag,
-						fmt::format("offsetof({}, {}::{})", ClassName, ClassName, PropertyName),
+						"0", //fmt::format("offsetof({}, {}::{})", ClassName, ClassName, PropertyName),
 						{},
 						PropertyClassName
 					);
+				PropertyInfo.PropertyFlag |= EPF_VectorFlag;
 			}
 		}
 	}
@@ -344,7 +347,8 @@ std::string ParseCppTypeToPropertyStaticInitializerCode(
 			fmt::format("offsetof({}, {}::{})", ClassName, ClassName, PropertyName),
 			PropertyMetadatas,
 			PropertyClassName,
-			VectorSubPropertyFunctionName
+			VectorSubPropertyFunctionName,
+			VectorTemplateInstantiationTypeName
 		);
 	return PropertyStaticInitializerCode;
 }
@@ -356,7 +360,8 @@ std::string GeneratePropertyStaticInitializerFunctionCode(
 	const std::string& PropertyAddressOffset,
 	const std::unordered_map<std::string, std::string>& PropertyMetadatas,
 	const std::string& PropertyClassName,
-	const std::string& VectorSubPropertyFunctionName
+	const std::string& VectorSubPropertyFunctionName,
+	const std::string& VectorTemplateInstantiationTypeName
 )
 {
 	kainjow::mustache::mustache PropertyInitializerFunctionTmpl(GeneratedTemplates::PropertyInitializerFunctionTemplate);
@@ -386,6 +391,9 @@ std::string GeneratePropertyStaticInitializerFunctionCode(
 	{
 		ExpressionList.push_back(
 			"    Prop.SetDataProperty(" + VectorSubPropertyFunctionName + "());\n"
+		);
+		ExpressionList.push_back(
+			"    Prop.SetTemplateInstantiationType(::GetVectorTemplateInstantiationType<" + VectorTemplateInstantiationTypeName + ">());\n"
 		);
 	}
 	PropertyInitializerFunctionData.set("ExpressionList", ExpressionList);

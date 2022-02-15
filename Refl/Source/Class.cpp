@@ -12,3 +12,5 @@ CFunction* CClass::FindFunction(const std::string& FunctionName)
     }
     return nullptr;
 }
+
+

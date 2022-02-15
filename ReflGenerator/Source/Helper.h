@@ -48,7 +48,8 @@ std::string GeneratePropertyStaticInitializerFunctionCode(
     const std::string& PropertyAddressOffset,
     const std::unordered_map<std::string, std::string>& PropertyMetadatas,
     const std::string& PropertyClassName = {},
-    const std::string& VectorSubPropertyFunctionName = {}
+    const std::string& VectorSubPropertyFunctionName = {},
+    const std::string& VectorTemplateInstantiationTypeName = {}
 );
 
 std::string ParseCppTypeToSpellString(const cppast::cpp_type& CppType, bool bIsRemoveCV = true);

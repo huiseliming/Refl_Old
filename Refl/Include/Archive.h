@@ -13,6 +13,7 @@ public:
 
 	virtual void Serialize(void* Ptr, uint64_t Length) = 0;
 	void SerializeClass(void* BasePtr, CClass* Class);
+	void SerializeProperty(void* BasePtr, CProperty* Property);
 	void SerializeProperties(void* BasePtr, std::vector<CProperty*>& Properties);
 
 	// TODO : compatible endianness[big-endian, little-endian]

@@ -11,65 +11,79 @@ void CArchive::SerializeClass(void* BasePtr, CClass* Class)
 	}
 }
 
+void CArchive::SerializeProperty(void* BasePtr, CProperty* Property)
+{
+	if (!Property->HasAnyFlag(EPF_PointerFlag | EPF_ReferenceFlag))
+	{
+		if (EPF_BoolFlag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(bool));
+		else if (EPF_SInt8Flag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(int8_t));
+		else if (EPF_SInt16Flag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(int16_t));
+		else if (EPF_SInt32Flag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(int32_t));
+		else if (EPF_SInt64Flag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(int64_t));
+		else if (EPF_UInt8Flag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(uint8_t));
+		else if (EPF_UInt16Flag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(uint16_t));
+		else if (EPF_UInt32Flag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(uint32_t));
+		else if (EPF_UInt64Flag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(uint64_t));
+		else if (EPF_FloatFlag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(float));
+		else if (EPF_DoubleFlag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(double));
+		else if (EPF_StringFlag & Property->GetTypeFlag())
+		{
+			auto StringPtr = (std::string*)Property->GetRowPtr(BasePtr);
+			uint32_t StrSize = StringPtr->size();
+			Serialize(&StrSize, sizeof(uint32_t));
+			StringPtr->resize(StrSize);
+			Serialize((void*)StringPtr->c_str(), StrSize);
+		}
+		else if (EPF_ClassFlag & Property->GetTypeFlag())
+		{
+			SerializeClass(Property->GetRowPtr(BasePtr), Property->GetClass());
+		}
+		else if (EPF_EnumFlag & Property->GetTypeFlag())
+		{
+			Serialize(Property->GetRowPtr(BasePtr), Property->GetEnum()->GetSize());
+		}
+		else if (EPF_VectorFlag & Property->GetTypeFlag())
+		{
+			auto TemplateInstantiationType = Property->GetTemplateInstantiationType();
+			auto ElementType = Property->GetDataProperty();
+			uint32_t VectorSize = TemplateInstantiationType->GetSize(Property->GetRowPtr(BasePtr));
+			Serialize(&VectorSize, sizeof(VectorSize));
+			TemplateInstantiationType->Resize(Property->GetRowPtr(BasePtr), VectorSize);
+			for (size_t i = 0; i < VectorSize; i++)
+			{
+				SerializeProperty(TemplateInstantiationType->GetDataPtr(Property->GetRowPtr(BasePtr), i), ElementType);
+			}
+		}
+	}
+	else
+	{
+		// ObjectPtr will serialize by uuid 
+		if (EPF_ObjectFlag & Property->GetTypeFlag())
+		{
+			if (IsWriter())
+			{
+				operator<<(const_cast<std::string&>(Property->GetObject(BasePtr)->GetUUID()));
+			}
+			else
+			{
+				std::string ObjectUUID;
+				operator<<(ObjectUUID);
+				if (CObject* Object = CObject::FindObject(ObjectUUID))
+				{
+					Property->SetObject(Object, Object);
+				}
+			}
+		}
+	}
+}
+
 void CArchive::SerializeProperties(void* BasePtr, std::vector<CProperty*>& Properties)
 {
 	for (size_t i = 0; i < Properties.size(); i++)
 	{
 		CProperty* Property = Properties[i];
-		uint32_t PropertyNameSize = Property->GetName().size();
-		//Ar.Serialize(&PropertyNameSize, sizeof(uint32_t));
-		//Ar.Serialize((void*)Property->GetName().c_str(), PropertyNameSize);
-		// TODO : compatible endianness[big-endian, little-endian]
-		if (!Property->HasAnyFlag(EPF_PointerFlag | EPF_ReferenceFlag))
-		{
-			if (EPF_BoolFlag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(bool));
-			else if (EPF_SInt8Flag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(int8_t));
-			else if (EPF_SInt16Flag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(int16_t));
-			else if (EPF_SInt32Flag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(int32_t));
-			else if (EPF_SInt64Flag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(int64_t));
-			else if (EPF_UInt8Flag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(uint8_t));
-			else if (EPF_UInt16Flag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(uint16_t));
-			else if (EPF_UInt32Flag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(uint32_t));
-			else if (EPF_UInt64Flag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(uint64_t));
-			else if (EPF_FloatFlag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(float));
-			else if (EPF_DoubleFlag & Property->GetTypeFlag()) Serialize(Property->GetRowPtr(BasePtr), sizeof(double));
-			else if (EPF_StringFlag & Property->GetTypeFlag())
-			{
-				auto StringPtr = (std::string*)Property->GetRowPtr(BasePtr);
-				uint32_t StrSize = StringPtr->size();
-				Serialize(&StrSize, sizeof(uint32_t));
-				StringPtr->resize(StrSize);
-				Serialize((void*)StringPtr->c_str(), StrSize);
-			}
-			else if (EPF_ClassFlag & Property->GetTypeFlag())
-			{
-				SerializeClass(Property->GetRowPtr(BasePtr), Property->GetClass());
-			}
-			else if (EPF_EnumFlag & Property->GetTypeFlag())
-			{
-				Serialize(Property->GetRowPtr(BasePtr), Property->GetEnum()->GetSize());
-			}
-		}
-		else
-		{
-			// ObjectPtr will serialize by uuid 
-			if (EPF_ObjectFlag & Property->GetTypeFlag())
-			{
-				if (IsWriter())
-				{
-					operator<<(const_cast<std::string&>(Property->GetObject(BasePtr)->GetUUID()));
-				}
-				else
-				{
-					std::string ObjectUUID;
-					operator<<(ObjectUUID);
-					if (CObject* Object = CObject::FindObject(ObjectUUID))
-					{
-						Property->SetObject(Object, Object);
-					}
-				}
-			}
-		}
+		SerializeProperty(BasePtr, Property);
+		//uint32_t PropertyNameSize = Property->GetName().size();
 	}
 }
 

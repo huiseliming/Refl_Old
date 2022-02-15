@@ -28,43 +28,107 @@ void CType::ProcessPostStaticInitializerEvent()
     PostStaticInitializerListRef.clear();
 }
 
-//CTypeManager::CTypeManager()
+#define DECL_BUILTIN_TYPE_STATIC_TYPE(BuiltinType,NameString)\
+template<>\
+CType* TBuiltinType<BuiltinType>::BUILTIN_TYPE_STATIC_INITIALIZER()\
+{\
+    static TBuiltinType<BuiltinType> ST(NameString); \
+    return &ST; \
+}\
+template<>\
+CType* TBuiltinType<BuiltinType>::StaticType() \
+{\
+    static CType* T = BUILTIN_TYPE_STATIC_INITIALIZER();\
+    return T;\
+}\
+
+DECL_BUILTIN_TYPE_STATIC_TYPE(bool,     "Bool")
+DECL_BUILTIN_TYPE_STATIC_TYPE(uint8_t,  "UInt8")
+DECL_BUILTIN_TYPE_STATIC_TYPE(uint16_t, "UInt16")
+DECL_BUILTIN_TYPE_STATIC_TYPE(uint32_t, "UInt32")
+DECL_BUILTIN_TYPE_STATIC_TYPE(uint64_t, "UInt64")
+DECL_BUILTIN_TYPE_STATIC_TYPE(int8_t,   "SInt8")
+DECL_BUILTIN_TYPE_STATIC_TYPE(int16_t,  "SInt16")
+DECL_BUILTIN_TYPE_STATIC_TYPE(int32_t,  "SInt32")
+DECL_BUILTIN_TYPE_STATIC_TYPE(int64_t,  "SInt64")
+DECL_BUILTIN_TYPE_STATIC_TYPE(float,    "Float")
+DECL_BUILTIN_TYPE_STATIC_TYPE(double,   "Double")
+
+#undef DECL_BUILTIN_TYPE_STATIC_TYPE
+
+template class REFL_API TBuiltinType<bool>;
+template class REFL_API TBuiltinType<uint8_t>;
+template class REFL_API TBuiltinType<uint16_t>;
+template class REFL_API TBuiltinType<uint32_t>;
+template class REFL_API TBuiltinType<uint64_t>;
+template class REFL_API TBuiltinType<int8_t>;
+template class REFL_API TBuiltinType<int16_t>;
+template class REFL_API TBuiltinType<int32_t>;
+template class REFL_API TBuiltinType<int64_t>;
+template class REFL_API TBuiltinType<float>;
+template class REFL_API TBuiltinType<double>;
+
+static TAutoInitializer<bool>     BoolAutoInitializer;
+static TAutoInitializer<uint8_t>  UInt8AutoInitializer;
+static TAutoInitializer<uint16_t> UInt16AutoInitializer;
+static TAutoInitializer<uint32_t> UInt32AutoInitializer;
+static TAutoInitializer<uint64_t> UInt64AutoInitializer;
+static TAutoInitializer<int8_t>   SInt8AutoInitializer;
+static TAutoInitializer<int16_t>  SInt16AutoInitializer;
+static TAutoInitializer<int32_t>  SInt32AutoInitializer;
+static TAutoInitializer<int64_t>  SInt64AutoInitializer;
+static TAutoInitializer<float>    FloatAutoInitializer;
+static TAutoInitializer<double>   DoubleAutoInitializer;
+
+template<>
+CType* TNamedType<std::string>::NAMED_TYPE_STATIC_INITIALIZER()
+{
+    static CType T("String");
+    return &T;
+}
+
+template<>
+CType* TNamedType<std::string>::StaticType()
+{
+    static CType* T = NAMED_TYPE_STATIC_INITIALIZER();
+    return T;
+}
+
+template class REFL_API TNamedType<std::string>;
+
+static std::function<CType* ()> StringAutoInitializer = 
+[] () -> CType*{
+    CType* StringType = TNamedType<std::string>::StaticType();
+    InitializeType<std::string>(StringType);
+    assert(!CType::StaticTable().contains(StringType->GetName()));
+    CType::StaticTable().insert(std::make_pair(StringType->GetName(), StringType));
+    return StringType;
+};
+
+static CType* StringType = StringAutoInitializer();
+
+//
+//template<>
+//CType* TAnonymousType<std::vector<int>>::ANONYMOUS_TYPE_STATIC_INITIALIZER()
 //{
-//#define STATIC_TYPE(A, B) static CCppType A##Type(#B, sizeof(B))
-//    static CCppType Type("void");
-//    STATIC_TYPE(bool, bool);
-//    STATIC_TYPE(unsigned_char, unsigned char);
-//    STATIC_TYPE(unsigned_short, unsigned short);
-//    STATIC_TYPE(unsigned_int, unsigned int);
-//    STATIC_TYPE(unsigned_long, unsigned long);
-//    STATIC_TYPE(unsigned_long_long, unsigned long long);
-//    //STATIC_TYPE(unsigned___int128, unsigned __int128);
-//    STATIC_TYPE(signed_char, signed char);
-//    STATIC_TYPE(short, short);
-//    STATIC_TYPE(int, int);
-//    STATIC_TYPE(long, long);
-//    STATIC_TYPE(long_long, long long);
-//    //STATIC_TYPE(__int128, __int128);
-//    STATIC_TYPE(float, float);
-//    STATIC_TYPE(double, double);
-//    STATIC_TYPE(long_double, long double);
-//    //STATIC_TYPE(__float128, __float128);
-//    STATIC_TYPE(char, char);
-//    STATIC_TYPE(wchar_t, wchar_t);
-//    STATIC_TYPE(char16_t, char16_t);
-//    STATIC_TYPE(char32_t, char32_t);
-//    STATIC_TYPE(nullptr, nullptr);
-//#undef STATIC_TYPE
+//    static TAnonymousType<std::vector<int>> ST();
+//    InitializeType<std::vector<int>>(&ST);
+//    return &ST; 
 //}
 //
-//void CType::CManager::RegisterType(CType* Type)
+//template<>
+//CType* TAnonymousType<std::vector<int>>::StaticType()
 //{
-//    assert(!Metadatas.contains(Type->Name));
-//    Metadatas[Type->Name] = Type;
+//    static CType* T = ANONYMOUS_TYPE_STATIC_INITIALIZER();
+//    return T; 
 //}
+//template class REFL_API TAnonymousType<std::vector<int>>;
 //
-//CTypeManager& CTypeManager::Instance()
-//{
-//    static CTypeManager Mgr;
-//    return Mgr;
-//}
+//static TAutoInitializer<bool> std_vector_int_AutoInitializer;
+//
+
+std::unordered_map<CTypeInfoWrapper, std::unique_ptr<CVectorTemplateType>, Hasher, EqualTo>& GetTypeInfoToVectorTemplateInstantiationType()
+{
+    static std::unordered_map<CTypeInfoWrapper, std::unique_ptr<CVectorTemplateType>, Hasher, EqualTo> TypeInfoMap;
+    return TypeInfoMap;
+}
