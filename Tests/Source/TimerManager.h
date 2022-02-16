@@ -2,7 +2,7 @@
 
 #include "Refl.h"
 
-class CLASS() CTimerManager
+class RCLASS() CTimerManager
 {
 	GENERATED_BODY()
 public:

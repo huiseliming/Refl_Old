@@ -5,19 +5,19 @@
 #include "ReflExport.h"
 
 #ifdef __REFL_GENERATED__
-#define METADATA(...)  __attribute__((annotate("Metadata" __VA_OPT__(",") #__VA_ARGS__)))
-#define CLASS(...)     METADATA(__VA_ARGS__)
-#define STRUCT(...)    METADATA(__VA_ARGS__)
-#define ENUM(...)      METADATA(__VA_ARGS__)
-#define PROPERTY(...)  METADATA(__VA_ARGS__)
-#define FUNCTION(...)  METADATA(__VA_ARGS__)
+#define RMETADATA(...)  __attribute__((annotate("Metadata" __VA_OPT__(",") #__VA_ARGS__)))
+#define RCLASS(...)     RMETADATA(__VA_ARGS__)
+#define RSTRUCT(...)    RMETADATA(__VA_ARGS__)
+#define RENUM(...)      RMETADATA(__VA_ARGS__)
+#define RPROPERTY(...)  RMETADATA(__VA_ARGS__)
+#define RFUNCTION(...)  RMETADATA(__VA_ARGS__)
 #else
-#define CLASS(...)
-#define STRUCT(...)
-#define ENUM(...)
-#define PROPERTY(...)
-#define FUNCTION(...)
-#define METADATA(...)
+#define RCLASS(...)
+#define RSTRUCT(...)
+#define RENUM(...)
+#define RPROPERTY(...)
+#define RFUNCTION(...)
+#define RMETADATA(...)
 #endif
 
 #define GENERATED_BODY()                   \
