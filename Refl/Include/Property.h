@@ -102,8 +102,8 @@ public:
     virtual std::string GetNumericToString(void const* ClassPtr) const { return ""; }
     virtual std::string GetBoolToString(void const* ClassPtr) const { return ""; }
 
-    virtual CObject* GetObject(void const* ClassPtr) const { return nullptr; }
-    virtual void SetObject(void const* ClassPtr, CObject* Value) { }
+    virtual RObject* GetObject(void const* ClassPtr) const { return nullptr; }
+    virtual void SetObject(void const* ClassPtr, RObject* Value) { }
 
     //virtual uint32_t GetPropertySize() const { return 0; }
     virtual uint32_t GetTypeSize() const { return Type_->GetSize(); }
@@ -314,8 +314,8 @@ public:
     CObjectProperty(const std::string& name)
         : CClassProperty(name)
     {}
-    virtual CObject* GetObject(void const* ClassPtr) const { return *(CObject**)GetRowPtr(ClassPtr); }
-    virtual void SetObject(void const* ClassPtr, CObject* Value) { *(CObject**)GetRowPtr(ClassPtr) = Value; }
+    virtual RObject* GetObject(void const* ClassPtr) const { return *(RObject**)GetRowPtr(ClassPtr); }
+    virtual void SetObject(void const* ClassPtr, RObject* Value) { *(RObject**)GetRowPtr(ClassPtr) = Value; }
 };
 
 

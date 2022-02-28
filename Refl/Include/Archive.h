@@ -3,7 +3,7 @@
 #include <string>
 #include "Refl.h"
 
-class CObject;
+class RObject;
 
 struct REFL_API CArchive
 {
@@ -57,7 +57,7 @@ public:
 		return *this;
 	}
 
-	CArchive& operator <<(CObject* Value)
+	CArchive& operator <<(RObject* Value)
 	{
 		Value->Serialize(*this);
 		return *this;

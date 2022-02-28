@@ -68,7 +68,7 @@ void CArchive::SerializeProperty(void* BasePtr, CProperty* Property)
 			{
 				std::string ObjectUUID;
 				operator<<(ObjectUUID);
-				if (CObject* Object = CObject::FindObject(ObjectUUID))
+				if (RObject* Object = RObject::FindObject(ObjectUUID))
 				{
 					Property->SetObject(Object, Object);
 				}

@@ -1,36 +1,39 @@
 #include "Object.h"
 #include "Archive.h"
-#define UUID_SYSTEM_GENERATOR
-#include "uuid.h"
-std::mutex CObject::UUIDToObjectMutex;
-std::unordered_map<std::string, CObject*> CObject::UUIDToObject;
 
-CObject::~CObject() 
+std::mutex RObject::IDToObjectMutex;
+std::unordered_map<FUUID, RObject*> RObject::IDToObject;
+
+RObject::RObject(CClass* Class)
+	: Class_(Class)
+{}
+
+RObject::~RObject()
 {
 	Unregister();
 }
 
-void CObject::SetUUID(const std::string& UUID)
+void RObject::SetUUID(const std::string& ID)
 {
 	{
-		std::lock_guard<std::mutex> Lock(UUIDToObjectMutex);
-		assert(!UUIDToObject.contains(UUID_));
+		std::lock_guard<std::mutex> Lock(IDToObjectMutex);
+		assert(!IDToObject.contains(UUID_));
 	}
 	UUID_ = UUID;
 }
 
-const std::string& CObject::GetUUID()
+const std::string& RObject::GetUUID()
 { 
 	return UUID_;
 }
 
-void CObject::Serialize(CArchive& Ar)
+void RObject::Serialize(CArchive& Ar)
 {
 	Ar << UUID_;
 	SerializeProperties(Ar);
 }
 
-void CObject::SerializeProperties(CArchive& Ar)
+void RObject::SerializeProperties(CArchive& Ar)
 {
 	Ar.SerializeClass(this, GetClass());
 	//CClass* Class = GetClass();
@@ -101,36 +104,50 @@ void CObject::SerializeProperties(CArchive& Ar)
 	//}
 }
 
-void CObject::Register()
+void RObject::Register()
 {
 	assert(!UUID_.empty());
-	std::lock_guard<std::mutex> Lock(UUIDToObjectMutex);
-	UUIDToObject[UUID_] = this;
+	std::lock_guard<std::mutex> Lock(IDToObjectMutex);
+	IDToObject[UUID_] = this;
 }
 
-void CObject::Unregister()
+void RObject::Unregister()
 {
-	std::lock_guard<std::mutex> Lock(UUIDToObjectMutex);
-	assert(UUIDToObject.contains(UUID_));
-	UUIDToObject.erase(UUID_);
+	std::lock_guard<std::mutex> Lock(IDToObjectMutex);
+	assert(IDToObject.contains(UUID_));
+	IDToObject.erase(UUID_);
 }
 
-CObject* CObject::FindObject(std::string UUID)
+RObject* RObject::FindObject(std::string UUID)
 {
-	auto OI = UUIDToObject.find(UUID);
-	if (OI != UUIDToObject.end())
+	auto OI = IDToObject.find(UUID);
+	if (OI != IDToObject.end())
 	{
 		return OI->second;
 	}
 	return nullptr;
 }
 
-CObject* NewObject(CClass* Class, const std::string& UUID)
+
+CObjectManager& CObjectManager::Instance()
 {
-	CObject* O = (CObject*)Class->New();
+	static CObjectManager ObjectManager;
+	return ObjectManager;
+}
+
+
+
+
+
+
+
+
+
+RObject* NewObject(CClass* Class, const std::string& UUID)
+{
+	RObject* O = (RObject*)Class->New();
 	O->SetClass(Class);
-	if (!UUID.empty()) O->SetUUID(UUID);
+
 	else O->SetUUID(uuids::to_string(uuids::uuid_system_generator{}()));
 	return O;
 }
-

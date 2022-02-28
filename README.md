@@ -19,3 +19,26 @@ Refl目前仅在Windows上测试和使用,依赖库使用vcpkg集成.
 类基于动态反射的Cast实现.
 类属性的反射支持数组(参考UE4风格的TArray -> std::vector).
 类属性的反射支持字典(参考UE4风格的TMap -> std::[unordered_]map).
+
+
+struct FStruct
+{
+    // property...
+}
+
+// class 
+class CClass
+{
+    // property...
+    // function...
+}
+
+// Refl Object
+class RPlayer : public RObject
+{
+    // property...
+    // function...
+}
+
+
+
