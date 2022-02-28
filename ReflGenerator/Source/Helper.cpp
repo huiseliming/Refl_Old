@@ -296,11 +296,15 @@ std::string ParseCppTypeToPropertyStaticInitializerCode(
 				//CCodeGenerator::Instance().PropertyInitializer_.set("PropertyTypeClass", "CVectorProperty");
 				auto& CppMemberVariableVectorType = CppMemberVariableTemplateInstantiationType.arguments().value().begin()->type().value();
 				CPropertyInfo VectorElementPropertyInfo = ParseCppTypeToPropertyInfo(EntityIndex, CppMemberVariableVectorType);
-				std::string PropertyClassName;
+				std::string PropertyClassName, PropertyEnumName;
 				std::string VectorSubPropertyFunctionName;
 				if (VectorElementPropertyInfo.PropertyFlag & EPF_ClassFlag)
 				{
 					PropertyClassName = VectorElementPropertyInfo.PropertyClassName;
+				}
+				if (PropertyInfo.PropertyFlag & EPF_EnumFlag)
+				{
+					PropertyEnumName = VectorElementPropertyInfo.PropertyEnumName;
 				}
 				//else if (PropertyInfo.PropertyFlag & EPF_VectorFlag)
 				//{
@@ -314,7 +318,8 @@ std::string ParseCppTypeToPropertyStaticInitializerCode(
 						VectorElementPropertyInfo.PropertyFlag,
 						"0", //fmt::format("offsetof({}, {}::{})", ClassName, ClassName, PropertyName),
 						{},
-						PropertyClassName
+						PropertyClassName,
+						PropertyEnumName
 					);
 				PropertyInfo.PropertyFlag |= EPF_VectorFlag;
 			}
@@ -329,11 +334,15 @@ std::string ParseCppTypeToPropertyStaticInitializerCode(
 		PropertyInfo.PropertyFlag |= EPF_UnknowFlag;
 	}
 
-	std::string PropertyClassName;
+	std::string PropertyClassName, PropertyEnumName;
 	std::string VectorSubPropertyFunctionName;
 	if (PropertyInfo.PropertyFlag & EPF_ClassFlag)
 	{
 		PropertyClassName = PropertyInfo.PropertyClassName;
+	}
+	if (PropertyInfo.PropertyFlag & EPF_EnumFlag)
+	{
+		PropertyEnumName = PropertyInfo.PropertyEnumName;
 	}
 	else if (PropertyInfo.PropertyFlag & EPF_VectorFlag)
 	{
@@ -347,6 +356,7 @@ std::string ParseCppTypeToPropertyStaticInitializerCode(
 			fmt::format("offsetof({}, {}::{})", ClassName, ClassName, PropertyName),
 			PropertyMetadatas,
 			PropertyClassName,
+			PropertyEnumName,
 			VectorSubPropertyFunctionName,
 			VectorTemplateInstantiationTypeName
 		);
@@ -360,6 +370,7 @@ std::string GeneratePropertyStaticInitializerFunctionCode(
 	const std::string& PropertyAddressOffset,
 	const std::unordered_map<std::string, std::string>& PropertyMetadatas,
 	const std::string& PropertyClassName,
+	const std::string& PropertyEnumName,
 	const std::string& VectorSubPropertyFunctionName,
 	const std::string& VectorTemplateInstantiationTypeName
 )
@@ -372,12 +383,6 @@ std::string GeneratePropertyStaticInitializerFunctionCode(
 	PropertyInitializerFunctionData.set("PropertyAddressOffset", PropertyAddressOffset);
 	PropertyInitializerFunctionData.set("PropertyTypeClass", ToPropertyTypeName(PropertyFlag));
 	PropertyInitializerFunctionData.set("PropertyFlags", fmt::format("{:#x}", PropertyFlag));
-	for (auto Metadata : PropertyMetadatas)
-	{
-		ExpressionList.push_back(
-			"    Prop.AddMetadata(\"" + Metadata.first + "\", \"" + Metadata.second + "\");\n"
-		);
-	}
 	if (PropertyFlag & EPF_ClassFlag)
 	{
 		ExpressionList.push_back(
@@ -387,6 +392,12 @@ std::string GeneratePropertyStaticInitializerFunctionCode(
 			"    });\n"
 		);
 	}
+	else if (PropertyFlag & EPF_EnumFlag)
+	{
+		ExpressionList.push_back(
+			"    Prop.SetEnum(TEnum<" + PropertyEnumName + ">::StaticEnum());"
+		);
+	}
 	else if (PropertyFlag & EPF_VectorFlag)
 	{
 		ExpressionList.push_back(
@@ -394,6 +405,12 @@ std::string GeneratePropertyStaticInitializerFunctionCode(
 		);
 		ExpressionList.push_back(
 			"    Prop.SetTemplateInstantiationType(::GetVectorTemplateInstantiationType<" + VectorTemplateInstantiationTypeName + ">());\n"
+		);
+	}
+	for (auto Metadata : PropertyMetadatas)
+	{
+		ExpressionList.push_back(
+			"    Prop.AddMetadata(\"" + Metadata.first + "\", \"" + Metadata.second + "\");\n"
 		);
 	}
 	PropertyInitializerFunctionData.set("ExpressionList", ExpressionList);
