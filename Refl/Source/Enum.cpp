@@ -32,9 +32,10 @@ const std::string& CEnum::ToDisplayName(uint64_t InValue)
 {
     auto It = ValueToDisplayName_.find(InValue);
     if (It != ValueToDisplayName_.end())
-    {
         return It->second;
-    }
+    auto& Names = ToName(InValue);
+    if (!Names.empty())
+        return Names.front();
     return CStaticString::Empty;
 }
 
@@ -48,7 +49,7 @@ uint64_t CEnum::ToValue(const std::string& InName)
     return UINT64_MAX;
 }
 
-std::set<uint64_t>& CEnum::GetValues()
+std::set<uint64_t>& CEnum::GetEnumValues()
 {
     return Values_;
 }

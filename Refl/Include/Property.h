@@ -8,7 +8,7 @@ class CType;
 
 enum EPropertyFlag : uint64_t
 {
-	EPF_ZeroFlag                 = 0ULL,
+	EPF_NoFlags                  = 0ULL,
     EPF_VoidFlag                 = 1ULL << 0,
 	EPF_BoolFlag                 = 1ULL << 1,
 	EPF_SInt8Flag                = 1ULL << 2,
@@ -73,9 +73,9 @@ public:
     uint64_t GetTypeFlag() { return Flag_ & EPF_TypeFlagBits; }
     void*    GetRowPtr(void const* ClassPtr) const { return (void*)(((char*)(ClassPtr)) + AddressOffset_); }
 
-    virtual CType* GetType() { return Type_; }
-    virtual CClass* GetClass() { return nullptr; }
-    virtual CEnum* GetEnum() { return nullptr; }
+    virtual CType* GetType() const { return Type_; }
+    virtual CClass* GetClass() const { return nullptr; }
+    virtual CEnum* GetEnum() const { return nullptr; }
     virtual CVectorTemplateType* GetTemplateInstantiationType() { return nullptr; }
 
     virtual CProperty* GetDataProperty() { return nullptr; }
@@ -304,7 +304,7 @@ public:
         : CProperty(name)
     {}
 
-    virtual CClass* GetClass() override { return (CClass*)Type_; }
+    virtual CClass* GetClass() const  override { return (CClass*)Type_; }
     void SetClass(CClass* Class) { Type_ = Class;};
 };
 
@@ -325,9 +325,21 @@ public:
     CEnumProperty(const std::string& name)
         : CProperty(name)
     {}
-    virtual CType* GetType() override { return Type_; }
-    virtual CEnum* GetEnum() override { return (CEnum*)Type_; }
+
+    virtual CEnum* GetEnum() const override { return (CEnum*)Type_; }
     void SetEnum(CEnum* Enum) { Type_ = Enum; };
+    virtual uint64_t GetUInt(void const* ClassPtr) const override { 
+        if (GetEnum()->GetSize() == 32)
+            return *static_cast<uint32_t*>(GetRowPtr(ClassPtr));
+        else if (GetEnum()->GetSize() == 64)
+            return *static_cast<uint64_t*>(GetRowPtr(ClassPtr));
+        else if (GetEnum()->GetSize() == 16)
+            return *static_cast<uint16_t*>(GetRowPtr(ClassPtr));
+        else if (GetEnum()->GetSize() == 8)
+            return *static_cast<uint8_t*>(GetRowPtr(ClassPtr));
+        else
+            return 0;
+    }
 
 };
 

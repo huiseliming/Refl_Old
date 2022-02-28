@@ -98,7 +98,7 @@ const std::string& ToPropertyTypeName(uint64_t PropertyFlag)
 
 	switch (PropertyFlag & EPF_TypeFlagBits)
 	{
-	case EPF_ZeroFlag         : return CUnknowPropertyString;
+	case EPF_NoFlags          : return CUnknowPropertyString;
 	case EPF_VoidFlag         : return CVoidPropertyString; 
 	case EPF_BoolFlag         : return CBoolPropertyString;
 	case EPF_SInt8Flag        : return CSInt8PropertyString;

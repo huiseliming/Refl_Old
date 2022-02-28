@@ -11,13 +11,12 @@ public:
     {
     }
     
-
     void AddName(uint64_t InValue, const std::string& InName);
     void AddDisplayName(uint64_t InValue, const std::string& InDisplayName);
     const std::vector<std::string>& ToName(uint64_t InValue);
     const std::string& ToDisplayName(uint64_t InValue);
     uint64_t ToValue(const std::string& InName);
-    std::set<uint64_t>& GetValues();
+    std::set<uint64_t>& GetEnumValues();
 
 private:
     std::set<uint64_t> Values_;

@@ -4,6 +4,7 @@
 
 std::unordered_map<std::thread::id, CThreadObjectManager> GThreadIdToThreadObjectManager;
 CThreadObjectManager* GThreadObjectManager;
+uuids::uuid_system_generator GUUIDSystemGenerator;
 
 void CThreadObjectManager::CollectGarbage()
 {
@@ -132,4 +133,9 @@ void CollectGarbage()
 {
 	SetCurrentThreadObjectManager();
 	GThreadObjectManager->CollectGarbage();
+}
+
+std::string ToString(uuids::uuid UUID)
+{
+	return uuids::to_string(UUID);
 }

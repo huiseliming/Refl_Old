@@ -23,7 +23,7 @@ public:
     {
     }
     void SetSize(uint32_t Size) { Size_ = Size; }
-    uint32_t GetSize() { return Size_; }
+    uint32_t GetSize() const { return Size_; }
 
     static CType* FindType(const std::string& Name) { return NameToType.contains(Name) ? NameToType[Name] : nullptr; }
     static std::unordered_map<std::string, CType*>& StaticTable();

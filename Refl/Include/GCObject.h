@@ -122,9 +122,10 @@ protected:
 
 extern REFL_API std::unordered_map<std::thread::id, CThreadObjectManager> GThreadIdToThreadObjectManager;
 extern REFL_API CThreadObjectManager* GThreadObjectManager;
+extern REFL_API uuids::uuid_system_generator GUUIDSystemGenerator;
 
 REFL_API void SetCurrentThreadObjectManager();
 
 REFL_API void CollectGarbage();
 
-
+REFL_API std::string ToString(uuids::uuid UUID);

@@ -117,6 +117,6 @@ RObject* NewObject(CClass* Cls)
 	FObjectItem& ObjectItem = GThreadObjectManager->ApplyObjectItem();
 	ObjectItem.ObjectPtr_ = (RObject*)Cls->New();
 	ObjectItem.ObjectPtr_->SetClass(Cls);
-	ObjectItem.UUID_ = uuids::uuid_system_generator{}();
+	ObjectItem.UUID_ = GUUIDSystemGenerator();
 	return ObjectItem.ObjectPtr_;
 }
