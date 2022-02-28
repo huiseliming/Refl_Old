@@ -11,56 +11,58 @@
 
 class CArchive;
 
-
-class REFL_API RObject
+/**
+ * 
+ */
+class REFL_API RObjectBase
 {
-private:
-	friend RObject* NewObject(CClass*);
-	RObject(CClass* Class = nullptr);
+protected:
+	RObjectBase() = default;
+	virtual ~RObjectBase() {};
 	void SetClass(CClass* Class) { Class_ = Class; }
 
 public:
-	virtual ~RObject();
+	CClass* GetClass() { return Class_; }
+
+protected:
+	CClass* Class_;
+	FObjectItemIndexType ObjectItemIndex_;
+};
+
+
+/**
+ *
+ */
+class REFL_API RObject : public RObjectBase
+{
+	friend class CThreadObjectManager;
+private:
+	friend REFL_API RObject* NewObject(CClass* Class);
+	RObject();
+public:
 	virtual void Serialize(CArchive& Ar);
 	virtual void SerializeProperties(CArchive& Ar);
 
-	void Register();
-	void Unregister();
-
-	CClass* GetClass() { return Class_; }
 public:
 
 	static RObject* FindObject(std::string UUID);
 
 protected:
-	static std::mutex UUIDToObjectMutex;
-	static std::unordered_map<FUUID, RObject*> UUIDToObject;
 
-	std::set<RObject*> RootSet;
-
-protected:
-	CClass* Class_;
-	FObjectItemIndexType ObjectItem_;
 };
 
+/**
+ *
+ */
 template<typename T>
-RObject* NewObject(const std::string& UUID = {})
-{
-	return NewObject(T::StaticClass(), UUID);
-}
+RObject* NewObject() { return NewObject(T::StaticClass()); }
 
-REFL_API RObject* NewObject(CClass* Class, const std::string& UUID = {});
+/**
+ *
+ */
+REFL_API RObject* NewObject(CClass* Class);
 
-RObject* NewObject(CClass* Cls)
-{
-	FObjectItem& ObjectItem = GThreadObjectManager.ApplyObjectItem();
-	ObjectItem.ObjectPtr_ = (RObject*)Cls->New();
-	ObjectItem.ObjectPtr_->SetClass(Cls);
-	ObjectItem.UUID_ = uuids::uuid_system_generator{}();
-	ObjectItem.ObjectLifecycle = EOL_Initializing;
-	ObjectItem.ObjectLifecycle = EOL_PostInitialize;
-	ObjectItem.ObjectLifecycle = EOL_Valid;
-	return ObjectItem.ObjectPtr_;
-}
-//
+/**
+ *
+ */
 RObject* LoadObject(CArchive& Ar);

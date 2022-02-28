@@ -41,37 +41,20 @@ static CClass* StaticClass();              \
 //    EType Type_;
 //    std::string Value_;
 //};
-
+class CClass;
 
 class REFL_API CRecord
 {
     friend class CMetadataManager;
 public:
-    CRecord(const std::string& Name)
-        : Name_(Name)
-    {
-        Records.push_back(this);
-        Id_ = IdCounter++;
-    }
+    CRecord(const std::string& Name);
     virtual ~CRecord() = default;
 
-    std::string GetMetadataValue(const std::string& Key)
-    {
-        if (auto it = Metadatas_.find(Key); it != Metadatas_.end())
-            return it->second;
-        return nullptr;
-    }
+    std::string GetMetadataValue(const std::string& Key);
 
-    bool ContainsMetadataKey(const std::string& Key)
-    {
-        return Metadatas_.contains(Key);
-    }
+    bool ContainsMetadataKey(const std::string& Key);
 
-    void AddMetadata(const std::string& Key, const std::string& Value)
-    {
-        if (Metadatas_.contains(Key)) assert(false);
-        Metadatas_.insert_or_assign(Key, Value);
-    }
+    void AddMetadata(const std::string& Key, const std::string& Value);
 
     void SetName(const std::string& Name) { Name_ = Name; }
 
@@ -85,9 +68,12 @@ protected:
     std::unordered_map<std::string, std::string> Metadatas_;
 
 private:
+    friend REFL_API CClass* GetRecordAsClass(int64_t Id);
     static int64_t IdCounter;
     static std::vector<CRecord*> Records;
 };
+
+REFL_API CClass* GetRecordAsClass(int64_t Id);
 
 template<typename From, typename To>
 union TForceCast {

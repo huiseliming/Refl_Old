@@ -24,7 +24,7 @@ enum EPropertyFlag : uint64_t
 	EPF_StringFlag               = 1ULL << 12,
 	EPF_EnumFlag			     = 1ULL << 13,
 	EPF_ClassFlag                = 1ULL << 14,
-    EPF_ObjectFlag               = 1ULL << 15,
+    EPF_ObjectFlag               = 1ULL << 15, // Object must be is pointer
 
 	EPF_VectorFlag               = 1ULL << 24,
 	EPF_MapFlag                  = 1ULL << 25,
@@ -102,8 +102,8 @@ public:
     virtual std::string GetNumericToString(void const* ClassPtr) const { return ""; }
     virtual std::string GetBoolToString(void const* ClassPtr) const { return ""; }
 
-    virtual RObject* GetObject(void const* ClassPtr) const { return nullptr; }
-    virtual void SetObject(void const* ClassPtr, RObject* Value) { }
+    virtual RObject* GetReflObject(void const* ClassPtr) const { return nullptr; }
+    virtual void SetReflObject(void const* ClassPtr, RObject* Value) { }
 
     //virtual uint32_t GetPropertySize() const { return 0; }
     virtual uint32_t GetTypeSize() const { return Type_->GetSize(); }
@@ -314,8 +314,8 @@ public:
     CObjectProperty(const std::string& name)
         : CClassProperty(name)
     {}
-    virtual RObject* GetObject(void const* ClassPtr) const { return *(RObject**)GetRowPtr(ClassPtr); }
-    virtual void SetObject(void const* ClassPtr, RObject* Value) { *(RObject**)GetRowPtr(ClassPtr) = Value; }
+    virtual RObject* GetReflObject(void const* ClassPtr) const { return *(RObject**)GetRowPtr(ClassPtr); }
+    virtual void SetReflObject(void const* ClassPtr, RObject* Value) { *(RObject**)GetRowPtr(ClassPtr) = Value; }
 };
 
 

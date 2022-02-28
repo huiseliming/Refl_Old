@@ -1,35 +1,11 @@
 #include "Object.h"
 #include "Archive.h"
 
-std::mutex RObject::IDToObjectMutex;
-std::unordered_map<FUUID, RObject*> RObject::IDToObject;
 
-RObject::RObject(CClass* Class)
-	: Class_(Class)
-{}
 
-RObject::~RObject()
-{
-	Unregister();
-}
-
-void RObject::SetUUID(const std::string& ID)
-{
-	{
-		std::lock_guard<std::mutex> Lock(IDToObjectMutex);
-		assert(!IDToObject.contains(UUID_));
-	}
-	UUID_ = UUID;
-}
-
-const std::string& RObject::GetUUID()
-{ 
-	return UUID_;
-}
 
 void RObject::Serialize(CArchive& Ar)
 {
-	Ar << UUID_;
 	SerializeProperties(Ar);
 }
 
@@ -103,51 +79,44 @@ void RObject::SerializeProperties(CArchive& Ar)
 	//	}
 	//}
 }
-
-void RObject::Register()
-{
-	assert(!UUID_.empty());
-	std::lock_guard<std::mutex> Lock(IDToObjectMutex);
-	IDToObject[UUID_] = this;
-}
-
-void RObject::Unregister()
-{
-	std::lock_guard<std::mutex> Lock(IDToObjectMutex);
-	assert(IDToObject.contains(UUID_));
-	IDToObject.erase(UUID_);
-}
-
+//
+//void RObject::Register()
+//{
+//	assert(!UUID_.empty());
+//	std::lock_guard<std::mutex> Lock(IDToObjectMutex);
+//	IDToObject[UUID_] = this;
+//}
+//
+//void RObject::Unregister()
+//{
+//	std::lock_guard<std::mutex> Lock(IDToObjectMutex);
+//	assert(IDToObject.contains(UUID_));
+//	IDToObject.erase(UUID_);
+//}
+//
 RObject* RObject::FindObject(std::string UUID)
 {
-	auto OI = IDToObject.find(UUID);
-	if (OI != IDToObject.end())
-	{
-		return OI->second;
-	}
+	//auto OI = IDToObject.find(UUID);
+	//if (OI != IDToObject.end())
+	//{
+	//	return OI->second;
+	//}
 	return nullptr;
 }
+//
+//
+//CObjectManager& CObjectManager::Instance()
+//{
+//	static CObjectManager ObjectManager;
+//	return ObjectManager;
+//}
 
-
-CObjectManager& CObjectManager::Instance()
+RObject* NewObject(CClass* Cls)
 {
-	static CObjectManager ObjectManager;
-	return ObjectManager;
-}
-
-
-
-
-
-
-
-
-
-RObject* NewObject(CClass* Class, const std::string& UUID)
-{
-	RObject* O = (RObject*)Class->New();
-	O->SetClass(Class);
-
-	else O->SetUUID(uuids::to_string(uuids::uuid_system_generator{}()));
-	return O;
+	SetCurrentThreadObjectManager();
+	FObjectItem& ObjectItem = GThreadObjectManager->ApplyObjectItem();
+	ObjectItem.ObjectPtr_ = (RObject*)Cls->New();
+	ObjectItem.ObjectPtr_->SetClass(Cls);
+	ObjectItem.UUID_ = uuids::uuid_system_generator{}();
+	return ObjectItem.ObjectPtr_;
 }

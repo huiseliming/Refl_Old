@@ -62,7 +62,7 @@ void CArchive::SerializeProperty(void* BasePtr, CProperty* Property)
 		{
 			if (IsWriter())
 			{
-				operator<<(const_cast<std::string&>(Property->GetObject(BasePtr)->GetUUID()));
+				//operator<<(const_cast<std::string&>(Property->GetObject(BasePtr)->GetUUID()));
 			}
 			else
 			{
@@ -70,7 +70,7 @@ void CArchive::SerializeProperty(void* BasePtr, CProperty* Property)
 				operator<<(ObjectUUID);
 				if (RObject* Object = RObject::FindObject(ObjectUUID))
 				{
-					Property->SetObject(Object, Object);
+					Property->SetReflObject(Object, Object);
 				}
 			}
 		}

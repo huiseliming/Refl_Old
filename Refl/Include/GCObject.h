@@ -2,43 +2,59 @@
 #include <set>
 #include <list>
 #include <vector>
+#include <thread>
 #include <unordered_map>
+#include "ReflExport.h"
+#define NOMINMAX
 #define UUID_SYSTEM_GENERATOR
 #include "uuid.h"
 
 class RObject;
+class CClass;
+class CProperty;
 
 using FUUID = uuids::uuid;
 using FObjectItemIndexType = int32_t;
 
-enum EObjectLifecycle
+typedef void FScopeCycleStatOutput(double);
+
+class REFL_API CScopeCycleStat
 {
-	EOL_Invalid,
-	EOL_PreInitialize,
-	EOL_Initializing,
-	EOL_PostInitialize,
-	EOL_Valid,
-	EOL_PreUninitialize,
-	EOL_Uninitializing,
-	EOL_PostUninitialize,
-	EOL_NumberMax,
+public:
+	static FScopeCycleStatOutput ScopeCycleStatOutput;
+
+	CScopeCycleStat()
+	{
+		Start = std::chrono::steady_clock::now();
+	}
+	~CScopeCycleStat() {
+	
+	}
+	std::chrono::steady_clock::time_point Start;
 };
 
-enum EReflObjectFlag
-{
-	EROF_,
-};
+//class CScopeCycleCounter
+//{
+//};
 
+enum EReflObjectFlags : uint32_t
+{
+	EROF_NoFlags     = 0x00000000,
+	EROF_MarkGCRoot  = 0x00000001,
+
+	EROF_NeedDelete      = 0x80000000,
+	EROF_GCMark		 = 0x80000000,
+};
 
 struct FObjectItem
 {
 	FUUID UUID_;
 	RObject* ObjectPtr_{ nullptr };
-	uint64_t ObjectLifecycle : 3;
-	uint64_t ObjectFlag_ : 8;
+	uint64_t ObjectFlag_ {0};
+	//uint32_t ObjectLifecycle;
 };
 
-class CThreadObjectManager
+class REFL_API CThreadObjectManager
 {
 public:
 	CThreadObjectManager() = default;
@@ -46,66 +62,69 @@ public:
 	enum {
 		MinimumAllocationBlockNumber = 1 * 1024 * 1024,
 	};
-	using UObjectItemBlockType = std::array<FObjectItem, MinimumAllocationBlockNumber>;
+	//using UObjectItemBlockType = std::array<FObjectItem, MinimumAllocationBlockNumber>;
 public:
 
 	FObjectItem& ApplyObjectItem()
 	{
-		if (AvailableObjectItems_.empty()) Expand();
-		FObjectItemIndexType ObjectItemIndex = AvailableObjectItems_.front();
-		AvailableObjectItems_.pop_front();
-		//OccupiedObjectItems_.insert(ObjectItemIndex);
+		if (AvailableObjectItemList_.empty()) Expand();
+		FObjectItemIndexType ObjectItemIndex = AvailableObjectItemList_.front();
+		AvailableObjectItemList_.pop_front();
+		UsedObjectItemList_.insert(ObjectItemIndex);
 		FObjectItem& Ref = ObjectItemRef(ObjectItemIndex);
-		Ref.ObjectLifecycle = EOL_PreInitialize;
 		return Ref;
 	}
 
 	void ReleaseObjectItem(FObjectItemIndexType ObjectItemIndex)
 	{
 		FObjectItem& Ref = ObjectItemRef(ObjectItemIndex);
-		AvailableObjectItems_.push_front(ObjectItemIndex);
-		Ref.ObjectLifecycle = EOL_Invalid;
+		AvailableObjectItemList_.push_front(ObjectItemIndex);
+		UsedObjectItemList_.erase(ObjectItemIndex);
 	}
+
+	void CollectGarbage();
+
+protected:
+	void CollectGarbageMark();
+	void CollectGarbageMark(RObject* O);
+	void CollectGarbageMark(CClass* Cls, void* RowPtr);
+
+	void CollectGarbageSweep();
+	void CollectGarbageSweep(RObject* O);
 
 protected:
 	void Expand(FObjectItemIndexType BlockNumber = 1)
 	{
-		int32_t NewBlockIndex = ObjectItemBlocks_.size();
-		ObjectItemBlocks_.push_back({});
-		UObjectItemBlockType& ObjectItemBlock = ObjectItemBlocks_.back();
-		std::memset(&ObjectItemBlock, 0, sizeof(UObjectItemBlockType));
-		// clear memory
-		for (size_t i = 0; i < MinimumAllocationBlockNumber; i++)
+		for (size_t i = 0; i < BlockNumber; i++)
 		{
-			FObjectItemIndexType ArrayIndex = NewBlockIndex * MinimumAllocationBlockNumber + i;
-			AvailableObjectItems_.push_back(ArrayIndex);
+			AvailableObjectItemList_.push_back(ObjectArray_.size());
+			ObjectArray_.push_back({});
 		}
 	}
 
 	FObjectItem* ObjectItemPtr(FObjectItemIndexType Index)
 	{
-		return &ObjectItemBlocks_[Index / MinimumAllocationBlockNumber][Index % MinimumAllocationBlockNumber];
+		return &ObjectArray_[Index];
 	}
 
 	FObjectItem& ObjectItemRef(FObjectItemIndexType Index)
 	{
-		return ObjectItemBlocks_[Index / MinimumAllocationBlockNumber][Index % MinimumAllocationBlockNumber];
+		return ObjectArray_[Index];
 	}
 
 protected:
-	std::vector<UObjectItemBlockType> ObjectItemBlocks_;
-	std::list<FObjectItemIndexType> AvailableObjectItems_;
+	std::vector<FObjectItem> ObjectArray_;
+	std::list<FObjectItemIndexType> AvailableObjectItemList_;
+	std::set<FObjectItemIndexType> UsedObjectItemList_;
+	std::set<FObjectItemIndexType> GCRootSet_;
+
 };
 
-extern thread_local CThreadObjectManager GThreadObjectManager;
+extern REFL_API std::unordered_map<std::thread::id, CThreadObjectManager> GThreadIdToThreadObjectManager;
+extern REFL_API CThreadObjectManager* GThreadObjectManager;
 
+REFL_API void SetCurrentThreadObjectManager();
 
-
-
-
-
-
-
-
+REFL_API void CollectGarbage();
 
 

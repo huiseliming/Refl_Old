@@ -21,7 +21,7 @@ public:
 
     void AddProperty(CProperty* Property)
     {
-        Propertie_.push_back(Property);
+        Properties_.push_back(Property);
     }
 
     void AddFunction(CFunction* Function)
@@ -30,15 +30,17 @@ public:
     }
 
     std::vector<CClass*>& GetBases() { return Bases_; }
-    std::vector<CProperty*>& GetProperties() { return Propertie_; }
+    std::vector<CProperty*>& GetProperties() { return Properties_; }
     std::vector<CFunction*>& GetFunctions() { return Functions_; }
+
+    CProperty* FindProperty(const std::string& PropertyName);
 
     CFunction* FindFunction(const std::string& FunctionName);
 
 private:
     std::vector<CClass*> Bases_;
     //std::vector<CConstructor*> Constructors;
-    std::vector<CProperty*> Propertie_;
+    std::vector<CProperty*> Properties_;
     std::vector<CFunction*> Functions_;
 
 };
