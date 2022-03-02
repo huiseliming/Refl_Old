@@ -3,6 +3,10 @@
 #include "Enum.h"
 #include "Class.h"
 
+
+
+
+
 //template<typename T>
 //CType* StaticType()
 //{

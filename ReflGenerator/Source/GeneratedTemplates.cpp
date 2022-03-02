@@ -12,7 +12,7 @@ const char* HeaderTemplate =
 "\n"
 "{{#EnumStaticInitializerList}}"
 "#define ENUM_{{EnumName}}_GENERATED_BODY \\\n"
-"template<>"
+"template<>\\\n"
 "struct {{ExportApi}} TEnum<{{EnumName}}>\\\n"
 "{\\\n"
 "    static CEnum* StaticEnum();\\\n"

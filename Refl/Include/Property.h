@@ -329,13 +329,13 @@ public:
     virtual CEnum* GetEnum() const override { return (CEnum*)Type_; }
     void SetEnum(CEnum* Enum) { Type_ = Enum; };
     virtual uint64_t GetUInt(void const* ClassPtr) const override { 
-        if (GetEnum()->GetSize() == 32)
+        if (GetEnum()->GetSize() == 4)
             return *static_cast<uint32_t*>(GetRowPtr(ClassPtr));
-        else if (GetEnum()->GetSize() == 64)
-            return *static_cast<uint64_t*>(GetRowPtr(ClassPtr));
-        else if (GetEnum()->GetSize() == 16)
-            return *static_cast<uint16_t*>(GetRowPtr(ClassPtr));
         else if (GetEnum()->GetSize() == 8)
+            return *static_cast<uint64_t*>(GetRowPtr(ClassPtr));
+        else if (GetEnum()->GetSize() == 2)
+            return *static_cast<uint16_t*>(GetRowPtr(ClassPtr));
+        else if (GetEnum()->GetSize() == 1)
             return *static_cast<uint8_t*>(GetRowPtr(ClassPtr));
         else
             return 0;
@@ -350,13 +350,14 @@ public:
         : CProperty(name)
     {}
 
+    
     virtual CProperty* GetDataProperty() override { return DataProperty_; }
     void SetDataProperty(CProperty* DataProperty) { DataProperty_ = DataProperty;}
-    virtual CVectorTemplateType* GetTemplateInstantiationType() override { return TemplateInstantiationType_; }
-    void SetTemplateInstantiationType(CVectorTemplateType* Type) { TemplateInstantiationType_ = Type; }
+    virtual CVectorTemplateType* GetTemplateInstantiationType() override { return static_cast<CVectorTemplateType*>(Type_); }
+    void SetTemplateInstantiationType(CVectorTemplateType* Type) { Type_ = Type; }
 
 protected:
-    CVectorTemplateType* TemplateInstantiationType_;
+    //CVectorTemplateType* TemplateInstantiationType_;
     CProperty* DataProperty_;
 };
 

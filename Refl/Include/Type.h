@@ -42,6 +42,102 @@ private:
     uint32_t Size_;
 };
 
+class REFL_API CReflTypeContainer
+{
+public:
+    CReflTypeContainer()
+        : Type_(nullptr)
+        , DataPtr_(nullptr)
+        , RequestFree_(true)
+    {}
+    CReflTypeContainer(CType* Type, void* DataPtr = nullptr, bool RequestFree = true)
+    {
+        Set(Type, DataPtr, RequestFree);
+    }
+    ~CReflTypeContainer()
+    {
+        Clear();
+    }
+    CReflTypeContainer(const CReflTypeContainer& Other)
+    {
+        Type_ = Other.Type_;
+        DataPtr_ = Type_->New();
+        Type_->CopyAssign(DataPtr_, Other.DataPtr_);
+        RequestFree_ = true;
+    }
+    CReflTypeContainer(CReflTypeContainer&& Other)
+    {
+        Type_ = Other.Type_;
+        DataPtr_ = Type_->New();
+        Type_->MoveAssign(DataPtr_, Other.DataPtr_);
+        RequestFree_ = true;
+    }
+    CReflTypeContainer& operator=(const CReflTypeContainer& Other)
+    {
+        assert(std::addressof(Other) != this);
+        if (Type_ != Other.Type_)
+        {
+            Clear();
+            Type_ = Other.Type_;
+            DataPtr_ = Type_->New();
+            RequestFree_ = true;
+        }
+        Type_->CopyAssign(DataPtr_, Other.DataPtr_);
+        return *this;
+    }
+    CReflTypeContainer& operator=(CReflTypeContainer&& Other)
+    {
+        assert(std::addressof(Other) != this);
+        if (Type_ != Other.Type_)
+        {
+            Clear();
+            Type_ = Other.Type_;
+            DataPtr_ = Type_->New();
+            RequestFree_ = true;
+        }
+        Type_->MoveAssign(DataPtr_, Other.DataPtr_);
+        return *this;
+    }
+
+    void Set(CType* Type, void* DataPtr = nullptr, bool RequestFree = true)
+    {
+        Clear();
+        assert(Type);
+        Type_ = Type;
+        if (DataPtr)
+        {
+            DataPtr_ = DataPtr;
+        }
+        else
+        {
+            assert(RequestFree);
+            DataPtr_ = Type_->New();
+        }
+        RequestFree_ = RequestFree;
+    }
+
+    void Clear()
+    {
+        if (DataPtr_ && RequestFree_)
+        {
+            assert(Type_);
+            Type_->Delete(DataPtr_);
+        }
+        Type_ = nullptr;
+        DataPtr_ = nullptr;
+    }
+
+    bool IsValid() { return DataPtr_; }
+
+    CType* GetType() const { return Type_; }
+    void* GetDataPtr() const { return DataPtr_; }
+
+protected:
+    CType* Type_;
+    void* DataPtr_;
+    bool RequestFree_;
+};
+
 template<typename T>
 struct TEnum
 {
@@ -149,7 +245,7 @@ public:
     virtual void Remove(void* VectorPtr, uint32_t Offset, uint32_t Count) override
     {
         std::vector<T>* VP = reinterpret_cast<std::vector<T>*>(VectorPtr);
-        VP->erase(VP->begin() + Offset, VP->end() + Offset + Count);
+        VP->erase(VP->begin() + Offset, VP->begin() + Offset + Count);
     }
     virtual uint32_t GetSize(void* VectorPtr)
     {

@@ -302,7 +302,7 @@ std::string ParseCppTypeToPropertyStaticInitializerCode(
 				{
 					PropertyClassName = VectorElementPropertyInfo.PropertyClassName;
 				}
-				if (PropertyInfo.PropertyFlag & EPF_EnumFlag)
+				if (VectorElementPropertyInfo.PropertyFlag & EPF_EnumFlag)
 				{
 					PropertyEnumName = VectorElementPropertyInfo.PropertyEnumName;
 				}

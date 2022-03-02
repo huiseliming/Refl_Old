@@ -45,6 +45,7 @@ private:
 
 };
 
+
 //template<typename T>
 //class TCppClass : public CClass
 //{
