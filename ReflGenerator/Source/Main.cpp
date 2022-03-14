@@ -629,7 +629,7 @@ int main(int argc, char** argv) try
     else if (!options.count("file") || options["file"].as<std::vector<std::string>>().empty())
     {
         std::cerr << "missing file argument\n";
-        return 1;
+        return 0;
     }
     else
     {
