@@ -1,7 +1,7 @@
 #include "Helper.h"
 #include <memory>
-#include <fmt/format.h>
 #include <fstream>
+#include <format>
 #include "Property.h"
 #include "GeneratedTemplates.h"
 #include "Parser.h"
@@ -353,7 +353,7 @@ std::string ParseCppTypeToPropertyStaticInitializerCode(
 			"CLS_" + ClassName + "__PROP_" + PropertyName + "__STATIC_INITIALIZER",
 			PropertyName,
 			PropertyInfo.PropertyFlag,
-			fmt::format("offsetof({}, {}::{})", ClassName, ClassName, PropertyName),
+			std::format("offsetof({}, {}::{})", ClassName, ClassName, PropertyName),
 			PropertyMetadatas,
 			PropertyClassName,
 			PropertyEnumName,
@@ -382,7 +382,7 @@ std::string GeneratePropertyStaticInitializerFunctionCode(
 	PropertyInitializerFunctionData.set("PropertyName", PropertyName);
 	PropertyInitializerFunctionData.set("PropertyAddressOffset", PropertyAddressOffset);
 	PropertyInitializerFunctionData.set("PropertyTypeClass", ToPropertyTypeName(PropertyFlag));
-	PropertyInitializerFunctionData.set("PropertyFlags", fmt::format("{:#x}", PropertyFlag));
+	PropertyInitializerFunctionData.set("PropertyFlags", std::format("{:#x}", PropertyFlag));
 	if (PropertyFlag & EPF_ClassFlag)
 	{
 		ExpressionList.push_back(

@@ -1,7 +1,6 @@
 
 
 find_package(LLVM CONFIG REQUIRED)
-find_package(fmt CONFIG REQUIRED)
 find_package(cxxopts CONFIG REQUIRED)
 
 set(CLANG_INCLUDE_DIRS "llvm/clang/include")
@@ -18,7 +17,6 @@ target_link_libraries(ReflGenerator PUBLIC Refl)
 target_include_directories(ReflGenerator PUBLIC ${LLVM_INCLUDE_DIRS})
 target_link_directories(ReflGenerator PUBLIC ${LLVM_LIBRARY_DIRS})
 target_link_libraries(ReflGenerator PRIVATE libclang)
-target_link_libraries(ReflGenerator PRIVATE fmt::fmt)
 target_link_libraries(ReflGenerator PRIVATE cxxopts::cxxopts)
 target_link_libraries(ReflGenerator PRIVATE cppast)
 #target_link_libraries(ReflGenerator PUBLIC libclang ${CLANG_LIBS})

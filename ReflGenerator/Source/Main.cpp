@@ -13,7 +13,6 @@
 #include <cppast/cpp_member_function.hpp>
 #include <cppast/cpp_template.hpp>
 #include <cppast/cpp_enum.hpp>
-#include <fmt/format.h>
 
 #include "StaticType.h"
 #include "CodeGenerator.h"

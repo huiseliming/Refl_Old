@@ -1,7 +1,6 @@
 #include "Parser.h"
 #include "Property.h"
 #include "cppast/cpp_entity_kind.hpp"
-#include "fmt/format.h"
 
 CPropertyInfo ParseCppTypeToPropertyInfo(const cppast::cpp_entity_index& EntityIndex, const cppast::cpp_type& CppType)
 {
